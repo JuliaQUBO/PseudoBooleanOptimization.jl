@@ -1,9 +1,11 @@
 module PseudoBooleanOptimization
 
+const PBO = PseudoBooleanOptimization
+
 using Random
 
 include("function.jl")
-include("tools.jl")
+include("generic.jl")
 include("quadratization.jl")
 include("synthesis.jl")
 include("print.jl")
