@@ -41,18 +41,6 @@ varmul(x::Set{V}, y::Set{V}) where {V} = union(x, y)
 
 const × = varmul # \times[tab]
 
-varlt(x::V, y::V) where {V} = isless(x, y)
-
-const ≺ = varlt  # \prec[tab]
-
-function varlt(X::Set{V}, Y::Set{V}) where {V}
-    if length(X) == length(Y)
-        return isless(sort!(collect(X); lt=varlt), sort!(collect(Y); lt=varlt))
-    else
-        return isless(length(X), length(Y))
-    end
-end
-
 @doc raw"""
 """
 function degree end

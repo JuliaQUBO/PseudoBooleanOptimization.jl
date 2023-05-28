@@ -1,3 +1,14 @@
+@doc raw"""
+    AbstractTerm{V,T}
+
+In the context of pseudo-Boolean functions, a term is a pair ``(\omega \subset \mathbb{V}, c_{\omega} \in \mathbb{T})``.
+"""
+abstract type AbstractTerm{V,T} end
+
+@doc raw"""
+    AbstractFunction{V,T}
+"""
+abstract type AbstractFunction{V,T} end
 
 @doc raw"""
     gap(f::PBF{S, T}; bound::Symbol=:loose) where {S, T}
@@ -18,14 +29,14 @@ M \triangleq \sum_{\omega \neq \varnothing} \left|{c_\omega}\right|
 """
 function gap end
 
-const δ = gap
+const δ = gap # \delta [tab]
 
 @doc raw"""
     sharpness(f::PBF{S, T}; bound::Symbol=:loose, tol::T = T(1e-6)) where {S, T}
 """
 function sharpness end
 
-const ϵ = sharpness
+const ϵ = sharpness # \epsilon [tab]
 
 @doc raw"""
     derivative(f::PBF{V,T}, x::V) where {V,T}
@@ -40,8 +51,8 @@ The partial derivate of function ``f \in \mathscr{F}`` with respect to the ``x``
 """
 function derivative end
 
-const Δ = derivative
-const ∂ = derivative
+const Δ = derivative # \Delta [tab]
+const ∂ = derivative # \partial [tab]
 
 @doc raw"""
     gradient(f::PBF)
@@ -50,7 +61,7 @@ Computes the gradient of ``f \in \mathscr{F}`` where the ``i``-th derivative is 
 """
 function gradient end
 
-const ∇ = gradient
+const ∇ = gradient # \nabla [tab]
 
 @doc raw"""
     residual(f::PBF{S, T}, x::S) where {S, T}
@@ -65,7 +76,7 @@ The residual of ``f \in \mathscr{F}`` with respect to ``x``.
 """
 function residual end
 
-const Θ = residual
+const Θ = residual # \Theta [tab]
 
 @doc raw"""
     discretize(f::PBF{V,T}; tol::T) where {V,T}
@@ -93,3 +104,17 @@ function discretize end
 In-place version of [`discretize`](@ref).
 """
 function discretize! end
+
+@doc raw"""
+    varlt(u::V, v::V) where {V}
+
+    This function exists to define an arbitrary ordering for a given type and was created to address [^MOI].
+    There is no predefined comparison between instances MOI's `VariableIndex` type.
+        
+    [^MOI]: MathOptInterface Issue [#1985](https://github.com/jump-dev/MathOptInterface.jl/issues/1985)
+"""
+function varlt end
+
+varlt(u::V, v::V) where {V} = isless(u, v)
+
+const ≺ = varlt  # \prec[tab]
