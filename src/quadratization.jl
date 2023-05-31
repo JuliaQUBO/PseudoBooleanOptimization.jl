@@ -67,7 +67,7 @@ function quadratize!(
         f[i×s] += c
     end
 
-    return nothing
+    return f
 end
 
 @doc raw"""
@@ -124,7 +124,7 @@ function quadratize!(
         end
     end
 
-    return nothing
+    return f
 end
 
 @doc raw"""
@@ -147,7 +147,7 @@ function quadratize!(
         quadratize!(aux, f, ω, c, Quadratization{PTR_BG}(quad.stable))
     end
 
-    return nothing
+    return f
 end
 
 @doc raw"""
@@ -170,7 +170,7 @@ function quadratize!(
         quadratize!(aux, f, ω, c, Quadratization{PTR_BG}(quad.stable))
     end
 
-    return nothing
+    return f
 end
 
 @doc raw"""
@@ -198,9 +198,55 @@ end
 function quadratize!(aux::Function, f::PBF, quad::Quadratization{INFER})
     quadratize!(aux, f, infer_quadratization(f, quad.stable))
 
-    return nothing
+    return f
 end
 
-function quadratize!(::Function, ::PBF, ::Nothing)
-    return nothing
+function quadratize!(::Function, f::PBF, ::Nothing)
+    return f
+end
+
+function auxgen(::AbstractFunction{Symbol,T}; name::Symbol = :aux) where {T}
+    counter = Int[0]
+
+    function aux(n::Union{Integer,Nothing})
+        if isnothing(n)
+            return first(aux(1))
+        else
+            return [Symbol("$(name)_$(counter[] += 1)") for _ in 1:n]
+        end
+    end
+
+    return aux
+end
+
+function auxgen(::AbstractFunction{V,T}; name::AbstractString = "aux") where {V<:AbstractString,T}
+    counter = Int[0]
+
+    function aux(n::Union{Integer,Nothing})
+        if isnothing(n)
+            return first(aux(1))
+        else
+            return ["$(name)_$(counter[] += 1)" for _ in 1:n]
+        end
+    end
+
+    return aux
+end
+
+function auxgen(::AbstractFunction{V,T}; start::Integer = -1) where {V<:Integer,T}
+    counter = V[start]
+
+    function aux(n::Union{Integer,Nothing})
+        if isnothing(n)
+            return first(aux(1))
+        else
+            return [(counter[] += sign(counter[])) for _ in 1:n]
+        end
+    end
+
+    return aux
+end
+
+function quadratize!(f::PBF, quad::Union{Quadratization,Nothing})
+    return quadratize!(auxgen(f), f, quad)
 end

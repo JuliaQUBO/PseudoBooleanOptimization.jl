@@ -37,18 +37,3 @@ end
 function residual(f::DictFunction{V,T}, x::V) where {V,T}
     return DictFunction{V,T}(ω => c for (ω, c) ∈ f if (x ∉ ω))
 end
-
-function varlt(u::Set{V}, v::Set{V}) where {V}
-    if length(u) == length(v)
-        x = sort!(collect(u); lt = varlt)
-        y = sort!(collect(v); lt = varlt)
-
-        return x < y
-    else
-        return length(u) < length(v)
-    end
-end
-
-function varmul(u::Set{V}, v::Set{V}) where {V}
-    return u ∪ v
-end

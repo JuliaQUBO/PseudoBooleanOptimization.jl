@@ -100,7 +100,7 @@ function Base.:(*)(u::Term{V,T}, v::Term{V,T}) where {V,T}
     if u.ω == v.ω
         return Term{V,T}(u.ω, u.c * v.c, true) # use fast-track
     else
-        return Term{V,T}(sortedmergewith(u.ω, v.ω), u.c * v.c, true) # use fast-track
+        return Term{V,T}(sortedmergewith(u.ω, v.ω; lt = varlt), u.c * v.c, true) # use fast-track
     end
 end
 

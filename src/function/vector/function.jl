@@ -59,8 +59,29 @@ Base.iterate(f::VectorFunction, i::Integer) = iterate(f.Ω, i)
 #  Properties 
 Base.size(f::VectorFunction{V,T}) where {V,T} = (length(f),)
 
+function Base.getindex(f::VectorFunction{V,T}, i::Integer) where {V,T}
+    return getindex(f.Ω, i)
+end
+
+function Base.getindex(f::VectorFunction{V,T}, ::Nothing)
+    if isempty(f) || !isempty(first(first(f)))
+        return zero(T)
+    else
+        return last(first(f))
+    end
+end
+
+function Base.getindex(f::VectorFunction{V,T}, v::Vector{V}) where {V,T}
+    t = Term{V,T}(v)
+
+    i = findsorted(f.Ω, t)
+
+    return getindex(f.Ω, i)
+end
+
+
 #  Type conversion 
-function Base.convert(U::Type{<:T}, f::VectorFunction{<:Any,T}) where {T}
+function Base.convert(::Type{U}, f::VectorFunction{V,T}) where {V,T,U<:T}
     if isempty(f)
         return zero(U)
     elseif degree(f) == 0

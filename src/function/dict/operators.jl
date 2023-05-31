@@ -28,7 +28,7 @@ end
 
 function Base.:(+)(f::DictFunction{V,T}, c::T) where {V,T}
     if iszero(c)
-        copy(f)
+        return copy(f)
     else
         g = copy(f)
 
@@ -58,7 +58,7 @@ end
 
 function Base.:(-)(f::DictFunction{V,T}, c::T) where {V,T}
     if iszero(c)
-        copy(f)
+        return copy(f)
     else
         g = copy(f)
 
@@ -102,7 +102,7 @@ function Base.:(*)(f::DictFunction{V,T}, g::DictFunction{V,T}) where {V,T}
             for j = (i+1):n
                 ωj, cj = k[j]
 
-                h[union(ωi, ωj)] += 2 * ci * cj
+                h[ωi × ωj] += 2 * ci * cj
             end
         end
 
@@ -111,7 +111,7 @@ function Base.:(*)(f::DictFunction{V,T}, g::DictFunction{V,T}) where {V,T}
         sizehint!(h, m * n)
 
         for (ωᵢ, cᵢ) in f, (ωⱼ, cⱼ) in g
-            h[union(ωᵢ, ωⱼ)] += cᵢ * cⱼ
+            h[ωᵢ × ωⱼ] += cᵢ * cⱼ
         end
 
         return h

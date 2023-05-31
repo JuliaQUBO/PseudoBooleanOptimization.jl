@@ -18,6 +18,10 @@ include("print.jl")
 
 include("quadratization.jl")
 
-# include("synthesis.jl")
+# Synthetic PBF generation
+include("synthesis/wishart.jl")
+include("synthesis/regular_xorsat.jl")
+include("synthesis/sherrington_kirkpatrick.jl")
+include("synthesis/not_all_equal_3sat.jl")
 
 end # module PseudoBooleanOptimization

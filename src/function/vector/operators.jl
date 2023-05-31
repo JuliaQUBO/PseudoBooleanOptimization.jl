@@ -1,17 +1,14 @@
-
-
 #  Arithmetic: (+)
 function Base.:(+)(f::VectorFunction{V,T}, g::VectorFunction{V,T}) where {V,T}
-    return VectorFunction{V,T}(sortedmergewith(+, f, g), true)
+    return VectorFunction{V,T}(sortedmergewith(+, f, g; lt = varlt), true)
 end
 
 function Base.:(+)(f::VectorFunction{V,T}, c::T) where {V,T}
     g = copy(f)
 
-    for i = eachindex(g)
-        ω, a = g[i]
-        g[i] = Term{V,T}(ω, a * c, true)
-    end
+    g[nothing] += c
+    
+    return g
 end
 
 Base.:(+)(f::VectorFunction{V,T}, c) where {V,T} = +(f, convert(T, c))

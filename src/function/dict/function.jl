@@ -1,4 +1,4 @@
-struct DictFunction{V,T}
+struct DictFunction{V,T} <: AbstractFunction{V,T}
     Ω::Dict{Set{V},T}
 
     function DictFunction{V,T}(Ω::Dict{<:Union{Set{V},Nothing},T}) where {V,T}
