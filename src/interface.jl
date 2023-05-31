@@ -7,13 +7,27 @@ abstract type AbstractTerm{V,T} end
 
 @doc raw"""
     AbstractFunction{V,T}
+
+A pseudo-Boolean Function[^Boros2002] ``f \in \mathscr{F}`` over some field ``\mathbb{T}`` takes the form
+
+```math
+f(\mathbf{x}) = \sum_{\omega \in \Omega\left[f\right]} c_\omega \prod_{j \in \omega} x_j
+```
+
+where each ``\Omega\left[{f}\right]`` is the multi-linear representation of ``f`` as a set of terms.
+Each term is given by a unique set of indices ``\omega \subseteq \mathbb{V}`` related to some coefficient ``c_\omega \in \mathbb{T}``.
+We say that ``\omega \in \Omega\left[{f}\right] \iff c_\omega \neq 0``.
+Variables ``x_j`` are boolean, thus ``f : \mathbb{B}^{n} \to \mathbb{T}``.
+
+[^Boros2002]:
+    Endre Boros, Peter L. Hammer, **Pseudo-Boolean optimization**, *Discrete Applied Mathematics*, 2002 [{doi}](https://doi.org/10.1016/S0166-218X(01)00341-9)
 """
 abstract type AbstractFunction{V,T} end
 
 @doc raw"""
-    gap(f::PBF{S, T}; bound::Symbol=:loose) where {S, T}
+    maxgap(f::AbstractFunction{V,T}; bound::Symbol=:loose) where {V,T}
 
-Computes the least upper bound for the greatest variantion possible under some `` f \in \mathscr{F} `` i. e.
+Computes the least upper bound for the greatest variantion possible of `` f \in \mathscr{F} `` i. e.
 
 ```math
 \begin{array}{r l}
@@ -22,24 +36,24 @@ Computes the least upper bound for the greatest variantion possible under some `
 \end{array}
 ```
 
-A simple approach, avaiable using the `bound=:loose` parameter, is to define
+A simple approach is to define
 ```math
 M \triangleq \sum_{\omega \neq \varnothing} \left|{c_\omega}\right|
 ```
 """
-function gap end
+function maxgap end
 
-const δ = gap # \delta [tab]
+const δ = maxgap # \delta [tab]
 
 @doc raw"""
-    sharpness(f::PBF{S, T}; bound::Symbol=:loose, tol::T = T(1e-6)) where {S, T}
+    mingap(f::AbstractFunction{V,T}; bound::Symbol=:loose, tol::T = T(1e-6)) where {V,T}
 """
-function sharpness end
+function mingap end
 
-const ϵ = sharpness # \epsilon [tab]
+const ϵ = mingap # \epsilon [tab]
 
 @doc raw"""
-    derivative(f::PBF{V,T}, x::V) where {V,T}
+    derivative(f::AbstractFunction{V,T}, x::V) where {V,T}
 
 The partial derivate of function ``f \in \mathscr{F}`` with respect to the ``x`` variable.
 
@@ -55,7 +69,7 @@ const Δ = derivative # \Delta [tab]
 const ∂ = derivative # \partial [tab]
 
 @doc raw"""
-    gradient(f::PBF)
+    gradient(f::AbstractFunction)
 
 Computes the gradient of ``f \in \mathscr{F}`` where the ``i``-th derivative is given by [`derivative`](@ref).
 """
@@ -64,7 +78,7 @@ function gradient end
 const ∇ = gradient # \nabla [tab]
 
 @doc raw"""
-    residual(f::PBF{S, T}, x::S) where {S, T}
+    residual(f::AbstractFunction{V,T}, x::S) where {V,T}
 
 The residual of ``f \in \mathscr{F}`` with respect to ``x``.
 
@@ -79,7 +93,7 @@ function residual end
 const Θ = residual # \Theta [tab]
 
 @doc raw"""
-    discretize(f::PBF{V,T}; tol::T) where {V,T}
+    discretize(f::AbstractFunction{V,T}; tol::T) where {V,T}
 
 For a given function ``f \in \mathscr{F}`` written as
 
@@ -99,7 +113,7 @@ This is done by rationalizing every coefficient ``c_\omega`` according to some t
 function discretize end
 
 @doc raw"""
-    discretize!(f::PBF{V,T}; tol::T) where {V,T}
+    discretize!(f::AbstractFunction{V,T}; tol::T) where {V,T}
 
 In-place version of [`discretize`](@ref).
 """
@@ -108,13 +122,59 @@ function discretize! end
 @doc raw"""
     varlt(u::V, v::V) where {V}
 
-    This function exists to define an arbitrary ordering for a given type and was created to address [^MOI].
-    There is no predefined comparison between instances MOI's `VariableIndex` type.
+Compares two variables, ``u`` and ``v``, with respect to their length-lexicographic order.
+
+## Rationale
+This function exists to define an arbitrary ordering for a given type and was created to address [^MOI].
+There is no predefined comparison between instances MOI's `VariableIndex` type.
         
     [^MOI]: MathOptInterface Issue [#1985](https://github.com/jump-dev/MathOptInterface.jl/issues/1985)
 """
 function varlt end
 
-varlt(u::V, v::V) where {V} = isless(u, v)
+varlt(u::V, v::V) where {V}         = isless(u, v) # fallback
+varlt(u::V, v::V) where {V<:Symbol} = varlt(string(u), string(v))
+
+function varlt(u::V, v::V) where {V<:AbstractString}
+    if length(u) == length(v)
+        return u < v
+    else
+        return length(u) < length(v)
+    end
+end
 
 const ≺ = varlt  # \prec[tab]
+
+@doc raw"""
+    varmul(u::V, v::V) where {V}
+"""
+function varmul end
+
+const × = varmul # \times[tab]
+
+@doc raw"""
+    degree(f::AbstractTerm)
+    degree(f::AbstractFunction)
+"""
+function degree end
+
+@doc raw"""
+    lowerbound(f::AbstractFunction)
+
+Computes an approximate value for the greatest ``l \le f(\mathbf{x})``.
+"""
+function lowerbound end
+
+@doc raw"""
+    upperbound(f::AbstractFunction)
+
+Computes an approximate value for the least ``u \ge f(\mathbf{x})``.
+"""
+function upperbound end
+
+@doc raw"""
+    bounds(f::AbstractFunction)
+
+Given ``f : \mathbb{B}^{n} \to [a, b]``, returns the approximate extrema for the tightest ``[l, u] \supset [a, b]``.
+"""
+function bounds end

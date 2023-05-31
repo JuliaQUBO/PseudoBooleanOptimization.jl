@@ -1,16 +1,23 @@
 module PseudoBooleanOptimization
 
 using Random
-using StaticArrays
+using LinearAlgebra
 
+include("library.jl")
 include("interface.jl")
-include("term.jl")
-include("function.jl")
-# include("generic.jl")
-# include("quadratization.jl")
-# include("synthesis.jl")
-include("print.jl")
-include("macros.jl")
+include("abstract.jl")
 
+include("function/term.jl")
+include("function/dict/function.jl")
+# include("function/vector/function.jl")
+
+# This selects the implementation onwards
+const PBF{V,T} = DictFunction{V,T}
+
+include("print.jl")
+
+include("quadratization.jl")
+
+# include("synthesis.jl")
 
 end # module PseudoBooleanOptimization

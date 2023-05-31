@@ -1,19 +1,25 @@
-# QUBOTools.jl's Assets
+# PseudoBooleanOptimization.jl's Assets
 
 ## [Logo](@id logo)
 
-QUBOTools's logo depicts the conversion between binary data and spin states.
-This represents the available codecs for manipulating _Ising_ and _QUBO_ models.
+PseudoBooleanOptimization's logo is yet to be designed.
 
-[![QUBOTools.jl](logo.svg)](@ref logo)
+[![PseudoBooleanOptimization.jl](logo.svg)](@ref logo)
 
 ## Colors
 
-The colors were chosen according to  *Julia's Reference for logo graphics*[¹](#1).
-Text color matches the innermost shape and renders fairly well in both light and dark background themes.
+The colors were chosen according to *Julia's Reference for logo graphics*[^Julia].
+Text color matches renders fairly well in both light and dark background themes.
 
 ## Typography
-*Arial*(#2) Font was used.
-It was chosen to represent the simplicity of this package.
+The *MADETYPE Sunflower*[^Sunflower] font was chosen.
+It was converted to a SVG path using the *Google Font to Svg Path*[^DanMarshall] online tool.
 
-<a href="#1">¹</a> [github.com/JuliaLang/julia-logo-graphics](https://github.com/JuliaLang/julia-logo-graphics/)
+[^Julia]:
+    [github.com/JuliaLang/julia-logo-graphics](https://github.com/JuliaLang/julia-logo-graphics/)
+
+[^Sunflower]:
+    [Licensed](/docs/src/assets/fonts/Sunflower-LICENSE.txt) by the authors for use in this project
+
+[^DanMarshall]:
+    [danmarshall.github.io/google-font-to-svg-path](https://danmarshall.github.io/google-font-to-svg-path/)

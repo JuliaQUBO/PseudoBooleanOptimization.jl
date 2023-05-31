@@ -10,20 +10,21 @@ struct Quadratization{Q<:QuadratizationMethod}
 end
 
 @doc raw"""
-    quadratize!(aux::Function, f::PBF{S, T}, ::Quadratization{Q}) where {S,T,Q}
+    quadratize!(aux::Function, f::PBF{V, T}, ::Quadratization{Q}) where {V,T,Q}
 
 Quadratizes a given PBF in-place, i.e. applies a mapping ``\mathcal{Q} : \mathscr{F}^{k} \to \mathscr{F}^{2}``, where ``\mathcal{Q}`` is the quadratization method.
 
 ```julia
-aux(::Nothing)::S
-aux(::Integer)::Vector{S}
+aux(::Nothing)::V
+aux(::Integer)::Vector{V}
 ```
-""" function quadratize! end
+"""
+function quadratize! end
 
 @doc raw"""
     Quadratization{NTR_KZFD}(stable::Bool = false)
 
-Negative Term Reduction NTR-KZFD (Kolmogorov & Zabih, 2004; Freedman & Drineas, 2005)
+Negative term reduction NTR-KZFD (Kolmogorov & Zabih, 2004; Freedman & Drineas, 2005)
 
 Let ``f(\mathbf{x}) = x_{1} x_{2} \dots x_{k}``.
 
@@ -35,15 +36,16 @@ where ``\mathbf{x} \in \mathbb{B}^k``
 
 !!! info
     Introduces a new variable ``z`` and no non-submodular terms.
-""" struct NTR_KZFD <: QuadratizationMethod end
+"""
+struct NTR_KZFD <: QuadratizationMethod end
 
 function quadratize!(
     aux::Function,
-    f::PBF{S,T},
-    ω::Set{S},
+    f::PBF{V,T},
+    ω::Set{V},
     c::T,
     ::Quadratization{NTR_KZFD},
-) where {S,T}
+) where {V,T}
     # Degree
     k = length(ω)
 
@@ -51,7 +53,7 @@ function quadratize!(
     k < 3 && return nothing
 
     # Variables
-    s = aux()::S
+    s = aux()::V
 
     # Stabilize
     # NOTE: This method is stable by construction
@@ -71,7 +73,7 @@ end
 @doc raw"""
     Quadratization{PTR_BG}(stable::Bool = false)
 
-Positive Term Reduction PTR-BG (Boros & Gruber, 2014)
+Positive term reduction PTR-BG (Boros & Gruber, 2014)
 
 Let ``f(\mathbf{x}) = x_{1} x_{2} \dots x_{k}``.
 
@@ -84,15 +86,16 @@ where ``\mathbf{x} \in \mathbb{B}^k`` and ``\mathbf{z} \in \mathbb{B}^{k-2}``
 
 !!! info
     Introduces ``k - 2`` new variables ``z_{1}, \dots, z_{k-2}`` and ``k - 1`` non-submodular terms.
-""" struct PTR_BG <: QuadratizationMethod end
+"""
+struct PTR_BG <: QuadratizationMethod end
 
 function quadratize!(
     aux::Function,
-    f::PBF{S,T},
-    ω::Set{S},
+    f::PBF{V,T},
+    ω::Set{V},
     c::T,
     quad::Quadratization{PTR_BG},
-) where {S,T}
+) where {V,T}
     # Degree
     k = length(ω)
 
@@ -100,8 +103,8 @@ function quadratize!(
     k < 3 && return nothing
 
     # Variables
-    s = aux(k - 2)::Vector{S}
-    b = collect(ω)::Vector{S}
+    s = aux(k - 2)::Vector{V}
+    b = collect(ω)::Vector{V}
 
     # Stabilize
     quad.stable && sort!(b; lt = varlt)
@@ -128,15 +131,16 @@ end
     Quadratization{TERM_BY_TERM}(stable::Bool = false)
 
 Term-by-term quadratization. Employs other inner methods, specially [`NTR_KZFD`](@ref) and [`PTR_BG`](@ref).
-""" struct TERM_BY_TERM <: QuadratizationMethod end
+"""
+struct TERM_BY_TERM <: QuadratizationMethod end
 
 function quadratize!(
     aux::Function,
-    f::PBF{S,T},
-    ω::Set{S},
+    f::PBF{V,T},
+    ω::Set{V},
     c::T,
     quad::Quadratization{TERM_BY_TERM},
-) where {S,T}
+) where {V,T}
     if c < zero(T)
         quadratize!(aux, f, ω, c, Quadratization{NTR_KZFD}(quad.stable))
     else
@@ -147,15 +151,15 @@ function quadratize!(
 end
 
 @doc raw"""
-    quadratize!(aux::Function, f::PBF{S,T}, quad::Quadratization{TERM_BY_TERM}) where {S,T}
+    quadratize!(aux::Function, f::PBF{V,T}, quad::Quadratization{TERM_BY_TERM}) where {V,T}
 
     Receives a higher-degree pseudo-Boolean function 
 """
 function quadratize!(
     aux::Function,
-    f::PBF{S,T},
+    f::PBF{V,T},
     quad::Quadratization{TERM_BY_TERM},
-) where {S,T}
+) where {V,T}
     # Collect Terms
     Ω = collect(f)
 
@@ -169,10 +173,10 @@ function quadratize!(
     return nothing
 end
 
-
 @doc raw"""
     Quadratization{INFER}(stable::Bool = false)
-""" struct INFER <: QuadratizationMethod end
+"""
+struct INFER <: QuadratizationMethod end
 
 @doc raw"""
     infer_quadratization(f::PBF)

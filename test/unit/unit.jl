@@ -85,33 +85,12 @@ end
 #         end
 
 #         @testset "Calculus" begin
-#             @test PBO.gap(f; bound = :loose) ==
+#             @test PBO.maxgap(f; bound = :loose) ==
 #                   (PBO.upperbound(f; bound = :loose) - PBO.lowerbound(f; bound = :loose))
-#             @test PBO.gap(g; bound = :loose) ==
+#             @test PBO.maxgap(g; bound = :loose) ==
 #                   (PBO.upperbound(g; bound = :loose) - PBO.lowerbound(g; bound = :loose))
-#             @test PBO.gap(h; bound = :loose) ==
+#             @test PBO.maxgap(h; bound = :loose) ==
 #                   (PBO.upperbound(h; bound = :loose) - PBO.lowerbound(h; bound = :loose))
-#         end
-
-#         @testset "Quadratization" begin
-#             function aux(n::Union{Integer,Nothing})
-#                 if isnothing(n)
-#                     return :w
-#                 else
-#                     return [:w, :t, :u, :v][1:n]
-#                 end
-#             end
-
-#             @test PBO.quadratize(aux, p) == p
-#             @test PBO.quadratize(aux, q) == q
-#             @test PBO.quadratize(aux, r) == r
-#             @test PBO.quadratize(aux, s) == PBO.PBF{S,T}(
-#                 :w => 3.0,
-#                 [:x, :w] => 3.0,
-#                 [:y, :w] => -3.0,
-#                 [:z, :w] => -3.0,
-#                 [:y, :z] => 3.0,
-#             )
 #         end
 
 #         @testset "Discretization" begin
