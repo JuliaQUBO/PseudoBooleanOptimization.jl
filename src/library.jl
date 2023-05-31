@@ -6,7 +6,7 @@ function sortedmergewith(combine, u::AbstractVector{T}, v::AbstractVector{T}; lt
     j = 1
     k = 1
 
-    while i <= m && j <= n
+    @inbounds while i <= m && j <= n
         if lt(u[i], v[j])
             w[k] = u[i]
             k += 1
@@ -23,13 +23,13 @@ function sortedmergewith(combine, u::AbstractVector{T}, v::AbstractVector{T}; lt
         end
     end
 
-    while i <= m
+    @inbounds while i <= m
         w[k] = u[i]
         k += 1
         i += 1
     end
 
-    while j <= n
+    @inbounds while j <= n
         w[k] = v[j]
         k += 1
         j += 1
