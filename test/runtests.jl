@@ -1,6 +1,5 @@
 using Test
 using PseudoBooleanOptimization
-
 const PBO = PseudoBooleanOptimization
 
 # Test assets, i.e., test examples and mockups
