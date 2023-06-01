@@ -1,8 +1,12 @@
 # Quadratization
 
 ```@docs
-PBO.quadratize!
 PBO.quadratize
+PBO.quadratize!
+```
+
+```@docs
+PBO.auxgen
 ```
 
 ## Methods
