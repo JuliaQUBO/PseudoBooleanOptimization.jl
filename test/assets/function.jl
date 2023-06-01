@@ -38,9 +38,25 @@ const w = PBO.PBF{S,T}(:x, -100.0)
 const α = PBO.PBF{S,T}(:w, :x)
 const β = PBO.PBF{S,T}(:x)
 
-x = Set{Symbol}([:x])
-y = Set{Symbol}([:y])
-z = Set{Symbol}([:z])
+const x = Set{Symbol}([:x])
+const y = Set{Symbol}([:y])
+const z = Set{Symbol}([:z])
+
+const PBF_LIST = [
+    f,
+    g,
+    h,
+    p,
+    q,
+    r,
+    s,
+    t,
+    u,
+    v,
+    w,
+    α,
+    β,
+]
 
 const PBF_CONSTRUCTOR_LIST = [
     (PBO.PBF{S,T}(0.0), PBO.PBF{S,T}()),
@@ -131,6 +147,5 @@ const PBF_OPERATOR_LIST = [
 ]
 
 const PBF_EVALUATION_LIST = [
-    "dict" => [],
     "set"  => [(q, x) => 0.5, (q, y) => 1.5, (q, z) => 0.5, (r, x) => 1.0, (r, y) => 1.0, (r, z) => 0.0, (s, x) => 0.0, (s, y) => 0.0, (s, z) => 0.0, (p, x) => 1.5, (p, y) => 0.5, (p, z) => 0.5],
 ]

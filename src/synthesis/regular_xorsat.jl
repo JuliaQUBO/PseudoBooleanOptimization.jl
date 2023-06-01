@@ -10,38 +10,48 @@ function k_regular_k_xorsat(
     quad::Union{Quadratization,Nothing} = nothing,
 ) where {V,T,F<:AbstractFunction{V,T}}
     idx = zeros(Int, n, k)
-    col = collect(1:n)
+
+    for j = 1:k, i = 1:n
+        idx[i,j] = i
+    end
+
+    A = Matrix{Int}(undef, n, n)
+    b = Vector{Int}(undef, n)
+    c = Vector{Int}(undef, n)
+
+    u = Vector{Int}(undef, n)
 
     while true
-        # generate candidate
         while true
-            for j = 1:k
-                idx[:, j] .= shuffle!(rng, col)
-            end
+            _colwise_shuffle!(rng, idx)
 
-            if all(allunique(idx[i, :]) for i = 1:n)
+            if _rowwise_allunique(idx, u)
                 break
             end
         end
 
-        A = zeros(Int, n, n)
+        A .= 0
 
-        for i = 1:n, j = 1:k
-            A[i, idx[:, j]] .= 1
+        for i = 1:n, j = 1:k, l = 1:n
+            A[i, idx[l, j]] = 1
         end
 
-        b = rand(rng, (0, 1), n)
+        rand!(rng, b, (0, 1))
 
-        num_solutions = _mod2_numsolutions(A, b)
+        c .= b # copy values before elimination
+
+        num_solutions = _mod2_numsolutions!(A, b)
 
         if num_solutions > 0
             # Convert to boolean
             # s = 2x - 1
-            f = sum((T(-1))^(b[i]) * foldl(*, (F(idx[i,j] => T(2), T(-1)) for j = 1:k)) for i = 1:n)
+            f = sum((-1.0)^c[i] * prod([F(idx[i,j] => 2.0, -1.0) for j = 1:k]) for i = 1:n)
 
             return quadratize!(f, quad)
         end
     end
+
+    return nothing
 end
 
 """

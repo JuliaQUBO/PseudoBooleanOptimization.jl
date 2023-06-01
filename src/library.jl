@@ -1,4 +1,9 @@
-function sortedmergewith(combine, u::AbstractVector{T}, v::AbstractVector{T}; lt = isless) where {T}
+function sortedmergewith(
+    combine,
+    u::AbstractVector{T},
+    v::AbstractVector{T};
+    lt = isless,
+) where {T}
     m = length(u)
     n = length(v)
     w = Vector{T}(undef, m + n)
@@ -85,22 +90,67 @@ function _subscript(i::Integer)
     end
 end
 
-function _swaprows!(x::AbstractArray, i::Integer, j::Integer)
-    x[i,:], x[j,:] .= (x[j,:], x[i,:])
+function _colwise_shuffle!(rng, x::AbstractMatrix{U}) where {U<:Integer}
+    n = size(x, 2)
+
+    @inbounds for j = 1:n
+        shuffle!(rng, @view(x[:, j]))
+    end
+
+    return x
+end
+
+function _rowwise_allunique(
+    x::AbstractMatrix{U},
+    u::Vector{S},
+) where {U<:Integer,S<:Integer}
+    m, n = size(x)
+
+    for i = 1:m
+
+        u .= zero(S)
+
+        for j = 1:n
+            k = x[i, j]
+
+            if isone(u[k])
+                return false
+            else
+                u[k] = one(S)
+            end
+        end
+    end
+
+    return true
+end
+
+function _swaprows!(x::AbstractMatrix, i::Integer, j::Integer)
+    n = size(x, 2)
+
+    @inbounds for k = 1:n
+        x[i, k], x[j, k] = (x[j, k], x[i, k])
+    end
 
     return nothing
 end
 
-function _mod2_numsolutions(_A::AbstractMatrix{U}, _b::AbstractVector{U}) where {U<:Integer}
-    A, b = _mod2_elimination(_A, _b)
+function _swaprows!(x::AbstractVector, i::Integer, j::Integer)
+    x[i], x[j] = (x[j], x[i])
+
+    return nothing
+end
+
+function _mod2_numsolutions!(A::AbstractMatrix{U}, b::AbstractVector{U}) where {U<:Integer}
+    _mod2_elimination!(A, b)
+
     m, n = size(A)
 
     # start with full rank
     rank = m
 
-    for i in 1:m
-        if iszero(A[i,:])    # all-zero row encountered
-            if !iszero(b[i]) # no solutions
+    @inbounds for i = 1:m
+        if iszero(@view(A[i, :])) # all-zero row encountered
+            if !iszero(b[i])     # no solutions
                 return 0
             end
 
@@ -108,45 +158,46 @@ function _mod2_numsolutions(_A::AbstractMatrix{U}, _b::AbstractVector{U}) where 
         end
     end
 
-    return 2 ^ (n - rank)
+    return 2^(n - rank)
 end
 
-function _mod2_elimination(_A::AbstractMatrix{U}, _b::AbstractVector{U}) where {U<:Integer}
-    A = copy(_A)
-    b = copy(_b)
-
+function _mod2_elimination!(A::AbstractMatrix{U}, b::AbstractVector{U}) where {U<:Integer}
     m, n = size(A)
 
     i = 1
     j = 1
 
-    while i <= m && j <= n
-        max_i = i
+    @inbounds while i <= m && j <= n
+        pivot = i
 
         for l = i:m
             if A[l, j] == 1
-                max_i = l
+                pivot = l
                 break
             end
         end
 
-        if A[max_i, j] == 0
+        if A[pivot, j] == 0
             j += 1
-        else
-            if i != max_i
-                _swaprows!(A, i, max_i)
-                _swaprows!(b, i, max_i)
-            end
-
-            for u in (i+1):m
-                A[u,:] .⊻= A[u,j] .& A[i,:]
-                b[u]    ⊻= A[u,j] & b[i]
-            end
-
-            i += 1
-            j += 1
+            continue
         end
+
+        if i != pivot
+            _swaprows!(A, i, pivot)
+            _swaprows!(b, i, pivot)
+        end
+
+        for k = (i+1):m
+            for l = 1:n
+                A[k, l] ⊻= A[k, j] & A[i, l]
+            end
+
+            b[k] ⊻= A[k, j] & b[i]
+        end
+
+        i += 1
+        j += 1
     end
 
-    return (A, b)
+    return nothing
 end

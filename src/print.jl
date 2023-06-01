@@ -1,5 +1,7 @@
 function Base.show(io::IO, term::Term{V,T}) where {V,T}
-    if isone(term.c)
+    if isempty(term.ω)
+        print(io, string(term.c))
+    elseif isone(term.c)
         join(io, varshow.(term.ω), "*")
     else
         join(io, [string(term.c); varshow.(term.ω)], "*")

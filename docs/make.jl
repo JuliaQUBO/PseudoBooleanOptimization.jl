@@ -1,5 +1,6 @@
 using Documenter
 using PseudoBooleanOptimization
+const PBO = PseudoBooleanOptimization
 
 # Set up to run docstrings with jldoctest
 DocMeta.setdocmeta!(PseudoBooleanOptimization, :DocTestSetup, :(using PseudoBooleanOptimization); recursive = true)
@@ -16,7 +17,8 @@ makedocs(;
     sitename = "PseudoBooleanOptimization.jl",
     authors = "Pedro Maciel Xavier",
     pages = [
-        "Home"    => "index.md",
+        "Home"           => "index.md",
+        "Quadratization" => "quadratization.md"
     ],
     workdir = @__DIR__,
 )

@@ -17,7 +17,7 @@ end
 
 # TODO: How to name it properly
 function mingap(f::DictFunction{V,T}; tol::T = 1E-6) where {V,T}
-    return relaxedgcd(values(f); tol)::T # || one(T)
+    return relaxedgcd(collect(values(f)); tol)::T # || one(T)
 end
 
 function discretize!(f::DictFunction{V,T}; tol::T = 1E-6) where {V,T}
