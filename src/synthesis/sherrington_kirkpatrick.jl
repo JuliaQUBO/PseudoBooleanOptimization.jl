@@ -7,3 +7,7 @@ function sherrington_kirkpatrick(rng, ::Type{F}, n::Integer; μ::T = zero(T), σ
         for i = 1:n for j = (i+1):n
     ])
 end
+
+function sherrington_kirkpatrick(::Type{F}, n::Integer; μ::T = zero(T), σ::T = one(T)) where {V,T,F<:AbstractFunction{V,T}}
+    return sherrington_kirkpatrick(Random.GLOBAL_RNG, F, n; μ, σ)
+end

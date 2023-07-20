@@ -15,7 +15,6 @@ include("function/dict/function.jl")
 const PBF{V,T} = DictFunction{V,T}
 
 include("print.jl")
-
 include("quadratization.jl")
 
 # Synthetic PBF generation

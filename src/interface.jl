@@ -25,12 +25,12 @@ Variables ``x_j`` are boolean, thus ``f : \mathbb{B}^{n} \to \mathbb{T}``.
 abstract type AbstractFunction{V,T} end
 
 @doc raw"""
-    maxgap(f::AbstractFunction{V,T}; bound::Symbol=:loose) where {V,T}
+    maxgap(f::AbstractFunction{V,T}) where {V,T}
 
-Computes the least upper bound for the greatest variantion possible of `` f \in \mathscr{F} `` i. e.
+Computes the least upper bound for the greatest variantion possible of ``f \in \mathscr{F}`` i. e.
 
 ```math
-\begin{array}{r l}
+\begin{array}{rl}
     \min        & M \\
     \text{s.t.} & \left|{f(\mathbf{x}) - f(\mathbf{y})}\right| \le M ~~ \forall \mathbf{x}, \mathbf{y} \in \mathbb{B}^{n} 
 \end{array}
@@ -46,7 +46,9 @@ function maxgap end
 const δ = maxgap # \delta [tab]
 
 @doc raw"""
-    mingap(f::AbstractFunction{V,T}; bound::Symbol=:loose, tol::T = T(1e-6)) where {V,T}
+    mingap(f::AbstractFunction{V,T}, tol::T = T(1e-6)) where {V,T}
+
+The ideal minimum gap is the greatest lower bound on the smallest non-zero value taken by ``f \in \mathscr{F}``.
 """
 function mingap end
 
@@ -222,14 +224,14 @@ function degree end
 @doc raw"""
     lowerbound(f::AbstractFunction)
 
-Computes an approximate value for the greatest ``l \le f(\mathbf{x})``.
+Computes an approximate value for the greatest ``\forall \mathbf{x}. l \le f(\mathbf{x})``.
 """
 function lowerbound end
 
 @doc raw"""
     upperbound(f::AbstractFunction)
 
-Computes an approximate value for the least ``u \ge f(\mathbf{x})``.
+Computes an approximate value for the least ``\forall \mathbf{x}. u \ge f(\mathbf{x})``.
 """
 function upperbound end
 

@@ -11,7 +11,11 @@ end
 function Base.show(io::IO, func::DictFunction{V,T}) where {V,T}
     terms = Term{V,T}.(sort!(collect(func); by=first, lt=varlt))
 
-    join(io, terms, " + ")
+    if isempty(terms)
+        print(io, zero(T))
+    else
+        join(io, terms, " + ")
+    end
 end
 
 # function Base.show(io::IO, func::VectorFunction{V,T}) where {V,T}

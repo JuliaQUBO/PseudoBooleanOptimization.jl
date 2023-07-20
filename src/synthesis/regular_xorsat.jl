@@ -54,6 +54,15 @@ function k_regular_k_xorsat(
     return nothing
 end
 
+function k_regular_k_xorsat(
+    ::Type{F},
+    n::Integer,
+    k::Integer;
+    quad::Union{Quadratization,Nothing} = nothing,
+) where {V,T,F<:AbstractFunction{V,T}}
+    return k_regular_k_xorsat(Random.GLOBAL_RNG, F, n, k; quad)
+end
+
 """
     r_regular_k_xorsat(rng, r::Integer, k::Integer; quad::QuadratizationMethod)
 
@@ -75,4 +84,14 @@ function r_regular_k_xorsat(
         # NOTE: This might involve Sudoku solving!
         error("A method for generating r-regular k-XORSAT where r ≂̸ k is not implemented")
     end
+end
+
+function r_regular_k_xorsat(
+    ::Type{F},
+    n::Integer,
+    r::Integer,
+    k::Integer;
+    quad::Union{Quadratization,Nothing} = nothing,
+) where {V,T,F<:AbstractFunction{V,T}}
+    return r_regular_k_xorsat(Random.GLOBAL_RNG, F, n, r, k; quad)
 end
