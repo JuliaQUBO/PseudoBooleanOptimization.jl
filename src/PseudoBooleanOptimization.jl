@@ -2,6 +2,8 @@ module PseudoBooleanOptimization
 
 using Random
 using LinearAlgebra
+using MutableArithmetics
+const MA = MutableArithmetics
 
 include("library.jl")
 include("interface.jl")

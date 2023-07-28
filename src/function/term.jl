@@ -8,14 +8,14 @@ struct Term{V,T} <: AbstractTerm{V,T}
     c::T
 
     # standard constructor
-    function Term{V,T}(x::K,c::T) where {V,T,K<:TermKey{V}}
+    function Term{V,T}(x::K, c::T) where {V,T,K<:TermKey{V}}
         ω = unique!(sort!(collect(x); alg = InsertionSort, lt = varlt))
 
         return new{V,T}(ω, c)
     end
 
     # shortcut: fast-track
-    function Term{V,T}(x::K,c::T,::Nothing) where {V,T,K<:TermKey{V}}
+    function Term{V,T}(x::K, c::T, ::Nothing) where {V,T,K<:TermKey{V}}
         return new{V,T}(x, c)
     end
 
@@ -54,7 +54,9 @@ function Term{V,T}((v, c)::Pair{V,T}) where {V,T}
     return Term{V,T}(v, c)
 end
 
-function Term{V,T}((ω, c)::Pair{K,T}) where {V,T,K<:Union{AbstractVector{V},AbstractSet{V},Tuple{Vararg{V}}}}
+function Term{V,T}(
+    (ω, c)::Pair{K,T},
+) where {V,T,K<:Union{AbstractVector{V},AbstractSet{V},Tuple{Vararg{V}}}}
     return Term{V,T}(ω, c)
 end
 
@@ -67,7 +69,25 @@ function varlt(u::Term{V,T}, v::Term{V,T}) where {V,T}
 end
 
 function varmul(u::Term{V,T}, v::Term{V,T}) where {V,T}
-    return sortedmergewith(u, v; lt=varlt)
+    return sortedmergewith(u, v; lt = varlt)
+end
+
+function Base.length(::Term)
+    return 2
+end
+
+function Base.iterate(u::Term)
+    return (first(u), 2)
+end
+
+function Base.iterate(u::Term, i::Integer)
+    if i == 1
+        return (first(u), 2)
+    elseif i == 2
+        return (last(u), 3)
+    else
+        return nothing
+    end
 end
 
 function Base.first(u::Term)

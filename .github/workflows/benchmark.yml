@@ -1,0 +1,31 @@
+name: Benchmark
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  test:
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - version: '1'
+            os: ubuntu-latest
+            arch: x64
+    steps:
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+      - uses: julia-actions/julia-buildpkg@v1
+      - name: Run Benchmarks
+        run: >
+          julia --proj=benchmark benchmark/benchmark.jl --run --main
+          julia --proj=benchmark benchmark/benchmark.jl --run --dev
+          julia --proj=benchmark benchmark/report.jl --run
+      - name: Comment PR with file
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+           filePath: benchmark/data/REPORT.md
