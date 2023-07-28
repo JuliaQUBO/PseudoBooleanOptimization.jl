@@ -24,6 +24,18 @@ function get_results(main_results, dev_results)
     return results
 end
 
+function status_emoji(status::AbstractString)
+    if status == "regression"
+        return "❌"
+    elseif status == "improvement"
+        return "🎉"
+    elseif status == "invariant"
+        return "🟰"
+    else
+        return "❔"
+    end
+end
+
 function compare_results(results; keypath = "")
     report = []
 
@@ -32,6 +44,8 @@ function compare_results(results; keypath = "")
             append!(report, compare_results(val; keypath = "$keypath/$key"))
         elseif val isa Tuple
             main_trial, dev_trial = val
+
+            case_id = "$keypath/$key"
 
             main_μ = BenchmarkTools.mean(main_trial)
             main_m = BenchmarkTools.median(main_trial)
@@ -43,9 +57,12 @@ function compare_results(results; keypath = "")
 
             cmp_m = BenchmarkTools.judge(dev_m, main_m)
 
+            status = status_emoji(BenchmarkTools.time(cmp_m))
+
+
             push!(
                 report,
-                "| `$keypath/$key` | $(BenchmarkTools.prettytime(BenchmarkTools.time(main_μ))) ($(BenchmarkTools.prettytime(BenchmarkTools.time(main_m)))) ± $(BenchmarkTools.prettytime(BenchmarkTools.time(main_σ))) | $(BenchmarkTools.prettytime(BenchmarkTools.time(dev_μ))) ($(BenchmarkTools.prettytime(BenchmarkTools.time(dev_m)))) ± $(BenchmarkTools.prettytime(BenchmarkTools.time(dev_σ))) | $(BenchmarkTools.time(cmp_m)) |"
+                "| `$case_id` | $(BenchmarkTools.prettytime(BenchmarkTools.time(main_μ))) ($(BenchmarkTools.prettytime(BenchmarkTools.time(main_m)))) ± $(BenchmarkTools.prettytime(BenchmarkTools.time(main_σ))) | $(BenchmarkTools.prettytime(BenchmarkTools.time(dev_μ))) ($(BenchmarkTools.prettytime(BenchmarkTools.time(dev_m)))) ± $(BenchmarkTools.prettytime(BenchmarkTools.time(dev_σ))) | $(status) |"
             )
         end
     end
