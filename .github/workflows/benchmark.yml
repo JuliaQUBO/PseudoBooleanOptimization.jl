@@ -25,7 +25,7 @@ jobs:
           julia --proj=benchmark benchmark/benchmark.jl --run --main
           julia --proj=benchmark benchmark/benchmark.jl --run --dev
           julia --proj=benchmark benchmark/report.jl --run
-      - name: Comment PR with file
+      - name: Comment PR
         uses: thollander/actions-comment-pull-request@v2
         with:
-           filePath: benchmark/data/REPORT.md
+           filePath: '${GITHUB_WORKSPACE}/benchmark/data/REPORT.md'
