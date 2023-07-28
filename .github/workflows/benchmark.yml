@@ -28,4 +28,4 @@ jobs:
       - name: Comment PR
         uses: thollander/actions-comment-pull-request@v2
         with:
-           filePath: '${GITHUB_WORKSPACE}/benchmark/data/REPORT.md'
+           filePath: /benchmark/data/REPORT.md
