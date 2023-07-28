@@ -56,13 +56,13 @@ function compare_results(results; keypath = "")
             dev_σ = BenchmarkTools.std(dev_trial)
 
             cmp_m = BenchmarkTools.judge(dev_m, main_m)
-
+            
             status = status_emoji(BenchmarkTools.time(cmp_m))
-
+            ratio = BenchmarkTools.prettypercent(BenchmarkTools.time(BenchmarkTools.ratio(cmp_m)))
 
             push!(
                 report,
-                "| `$case_id` | $(BenchmarkTools.prettytime(BenchmarkTools.time(main_μ))) ($(BenchmarkTools.prettytime(BenchmarkTools.time(main_m)))) ± $(BenchmarkTools.prettytime(BenchmarkTools.time(main_σ))) | $(BenchmarkTools.prettytime(BenchmarkTools.time(dev_μ))) ($(BenchmarkTools.prettytime(BenchmarkTools.time(dev_m)))) ± $(BenchmarkTools.prettytime(BenchmarkTools.time(dev_σ))) | $(status) |"
+                "| `$case_id` | $(BenchmarkTools.prettytime(BenchmarkTools.time(main_μ))) ($(BenchmarkTools.prettytime(BenchmarkTools.time(main_m)))) ± $(BenchmarkTools.prettytime(BenchmarkTools.time(main_σ))) | $(BenchmarkTools.prettytime(BenchmarkTools.time(dev_μ))) ($(BenchmarkTools.prettytime(BenchmarkTools.time(dev_m)))) ± $(BenchmarkTools.prettytime(BenchmarkTools.time(dev_σ))) | $(status) ($(ratio)) |"
             )
         end
     end
@@ -76,8 +76,8 @@ function write_report(report, data_path)
     open(report_path, "w") do io
         println(io, "# Performance Report - `main` vs. `dev`")
         println(io)
-        println(io, "| case | `main` | `dev` | status |")
-        println(io, "| :--- | :----: | :---: | :----: |")
+        println(io, "| case | `main` | `dev` | diff |")
+        println(io, "| :--- | :----: | :---: | :--: |")
 
         for entry in report
             println(io, entry)
