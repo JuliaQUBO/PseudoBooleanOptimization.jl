@@ -24,12 +24,12 @@ function get_results(main_results, dev_results)
     return results
 end
 
-function status_emoji(status::AbstractString)
-    if status == "regression"
+function status_emoji(status::Symbol)
+    if status == :regression
         return "❌"
-    elseif status == "improvement"
+    elseif status == :improvement
         return "🎉"
-    elseif status == "invariant"
+    elseif status == :invariant
         return "🟰"
     else
         return "❔"
