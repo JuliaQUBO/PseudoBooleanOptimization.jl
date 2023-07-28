@@ -25,7 +25,13 @@ jobs:
           julia --proj=benchmark benchmark/benchmark.jl --run --main
           julia --proj=benchmark benchmark/benchmark.jl --run --dev
           julia --proj=benchmark benchmark/report.jl --run
+      - name: Display Report
+        run: >
+          ls -la
+          ls -la ./benchmark
+          ls -la ./benchmark/data
+          cat ./benchmark/data/REPORT.md
       - name: Comment PR
         uses: thollander/actions-comment-pull-request@v2
         with:
-           filePath: /benchmark/data/REPORT.md
+           filePath: ./benchmark/data/REPORT.md
