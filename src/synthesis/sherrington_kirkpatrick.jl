@@ -1,5 +1,12 @@
 @doc raw"""
     sherrington_kirkpatrick(rng, ::Type{F}, n::Integer; μ::T = zero(T), σ::T = one(T)) where {V,T,F<:AbstractFunction{V,T}}
+
+```math
+f^{(n)}_{\textrm{SK}}(\mathbf{x}) = \sum_{i = 1}^{n} \sum_{j = i + 1}^{n} J_{i, j} x_i x_j
+```
+
+where ``J_{i, j} \sim \mathcal{N}(0, 1)``.
+
 """
 function sherrington_kirkpatrick(rng, ::Type{F}, n::Integer; μ::T = zero(T), σ::T = one(T)) where {V,T,F<:AbstractFunction{V,T}}
     return sum([

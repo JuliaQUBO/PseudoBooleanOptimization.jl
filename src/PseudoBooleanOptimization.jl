@@ -7,8 +7,8 @@ const MA = MutableArithmetics
 
 include("library.jl")
 include("interface.jl")
-include("abstract.jl")
 
+include("function/abstract.jl")
 include("function/term.jl")
 include("function/dict/function.jl")
 # include("function/vector/function.jl")

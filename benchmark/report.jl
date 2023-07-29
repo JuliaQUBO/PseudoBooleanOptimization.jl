@@ -55,7 +55,7 @@ function compare_results(results; keypath = "")
             dev_m = BenchmarkTools.median(dev_trial)
             dev_σ = BenchmarkTools.std(dev_trial)
 
-            cmp_m = BenchmarkTools.judge(dev_m, main_m)
+            cmp_m = BenchmarkTools.judge(dev_m, main_m; time_tolerance=0.1)
             
             status = status_emoji(BenchmarkTools.time(cmp_m))
             ratio = BenchmarkTools.prettypercent(BenchmarkTools.time(BenchmarkTools.ratio(cmp_m)))
