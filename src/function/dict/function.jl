@@ -98,16 +98,5 @@ function Base.sizehint!(f::DictFunction, n::Integer)
     return f
 end
 
-#  Type conversion 
-function Base.convert(U::Type{<:T}, f::DictFunction{<:Any,T}) where {T}
-    if isempty(f)
-        return zero(U)
-    elseif degree(f) == 0
-        return convert(U, f[nothing])
-    else
-        error("Can't convert non-constant Pseudo-boolean Function to scalar type '$U'")
-    end
-end
-
 include("interface.jl")
 include("operators.jl")

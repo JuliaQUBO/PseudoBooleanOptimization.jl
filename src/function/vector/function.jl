@@ -1,10 +1,11 @@
 @doc raw"""
+    VectorFunction{V,T} <: AbstractFunction{V,T}
 """
 struct VectorFunction{V,T} <: AbstractFunction{V,T}
-    Ω::Vector{PBT{V,T}}
+    Ω::Vector{Term{V,T}}
 
     # standard constructor
-    function VectorFunction{V,T}(v::AbstractVector{PBT{V,T}}, ready::Bool = false) where {V,T}
+    function VectorFunction{V,T}(v::AbstractVector{Term{V,T}}, ready::Bool = false) where {V,T}
         if ready
             Ω = v
         else
@@ -16,17 +17,17 @@ struct VectorFunction{V,T} <: AbstractFunction{V,T}
 
     # heterogeneous list
     function VectorFunction{V,T}(x::AbstractVector) where {V,T}
-        return VectorFunction{V,T}(PBT{V,T}.(x))
+        return VectorFunction{V,T}(Term{V,T}.(x))
     end
 
     # dictionary
     function VectorFunction{V,T}(x::AbstractDict) where {V,T}
-        return VectorFunction{V,T}(PBT{V,T}.(pairs(x)))
+        return VectorFunction{V,T}(Term{V,T}.(pairs(x)))
     end
 
     # fallback
     function VectorFunction{V,T}(x::Any) where {V,T}
-        return VectorFunction{V,T}(PBT{V,T}[PBT{V,T}(x)])
+        return VectorFunction{V,T}(Term{V,T}[Term{V,T}(x)])
     end
 end
 
@@ -77,16 +78,4 @@ function Base.getindex(f::VectorFunction{V,T}, v::Vector{V}) where {V,T}
     i = findsorted(f.Ω, t)
 
     return getindex(f.Ω, i)
-end
-
-
-#  Type conversion 
-function Base.convert(::Type{U}, f::VectorFunction{V,T}) where {V,T,U<:T}
-    if isempty(f)
-        return zero(U)
-    elseif degree(f) == 0
-        return convert(U, f[nothing])
-    else
-        error("Can't convert non-constant Pseudo-boolean VectorFunction to scalar type '$U'")
-    end
 end

@@ -20,10 +20,6 @@ Alternatively, can even replace the Gaussian with a bounded range uniform discre
 """
 function wishart end
 
-function wishart(::Type{F}, n::Integer, m::Integer = 1; discretize_bonds::Bool = false, precision = nothing) where {V,T,F<:AbstractFunction{V,T}}
-    return wishart(GLOBAL_RNG, F, n, m; discretize_bonds, precision)
-end
-
 function wishart(rng, ::Type{F}, n::Integer, m::Integer = 1; discretize_bonds::Bool = false, precision = nothing) where {V,T,F<:AbstractFunction{V,T}}
     # Plants the FM GS
     t = ones(n, 1)
@@ -55,4 +51,8 @@ function wishart(rng, ::Type{F}, n::Integer, m::Integer = 1; discretize_bonds::B
     # Convert to boolean
     # s = 2x - 1
     return sum([J[i,j] * F(i => T(2), T(-1)) * F(j => T(2), T(-1)) for i = 1:n for j = 1:n])
+end
+
+function wishart(::Type{F}, n::Integer, m::Integer = 1; discretize_bonds::Bool = false, precision = nothing) where {V,T,F<:AbstractFunction{V,T}}
+    return wishart(GLOBAL_RNG, F, n, m; discretize_bonds, precision)
 end

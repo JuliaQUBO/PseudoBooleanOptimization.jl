@@ -1,17 +1,21 @@
-function Base.show(io::IO, term::Term{V,T}) where {V,T}
-    if isempty(term.ω)
-        print(io, string(term.c))
-    elseif isone(term.c)
-        join(io, varshow.(term.ω), "*")
+function Base.show(io::IO, (ω, c)::Term{V,T}) where {V,T}
+    if isempty(ω)
+        print(io, c)
+    elseif isone(c)
+        join(io, varshow.(ω), "*")
     else
-        join(io, [string(term.c); varshow.(term.ω)], "*")
+        join(io, [string(c); varshow.(ω)], "*")
     end
 end
 
 function Base.show(io::IO, func::DictFunction{V,T}) where {V,T}
     terms = Term{V,T}.(sort!(collect(func); by=first, lt=varlt))
 
-    join(io, terms, " + ")
+    if isempty(terms)
+        print(io, zero(T))
+    else
+        join(io, terms, " + ")
+    end
 end
 
 # function Base.show(io::IO, func::VectorFunction{V,T}) where {V,T}

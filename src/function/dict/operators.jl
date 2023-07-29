@@ -179,7 +179,9 @@ function (f::DictFunction{V,T})(x::Dict{V,U}) where {V,T,U<:Integer}
             end
         end
 
-        g[η] += c
+        if !iszero(c)
+            g[η] += c
+        end
     end
 
     return g

@@ -2,11 +2,13 @@ module PseudoBooleanOptimization
 
 using Random
 using LinearAlgebra
+using MutableArithmetics
+const MA = MutableArithmetics
 
 include("library.jl")
 include("interface.jl")
-include("abstract.jl")
 
+include("function/abstract.jl")
 include("function/term.jl")
 include("function/dict/function.jl")
 # include("function/vector/function.jl")
@@ -15,7 +17,6 @@ include("function/dict/function.jl")
 const PBF{V,T} = DictFunction{V,T}
 
 include("print.jl")
-
 include("quadratization.jl")
 
 # Synthetic PBF generation
