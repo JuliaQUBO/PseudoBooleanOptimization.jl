@@ -275,14 +275,14 @@ function auxgen(::AbstractFunction{V,T}; start::V = V(0), step::V = V(-1)) where
     return aux
 end
 
-function quadratize!(f::PBF, quad::Union{Quadratization,Nothing})
+function quadratize!(f::PBF, quad::Union{Quadratization,Nothing} = Quadratization{INFER})
     return quadratize!(auxgen(f), f, quad)
 end
 
-function quadratize(aux, f::PBF, quad::Union{Quadratization,Nothing})
+function quadratize(aux, f::PBF, quad::Union{Quadratization,Nothing} = Quadratization{INFER})
     return quadratize!(aux, copy(f), quad)
 end
 
-function quadratize(f::PBF, quad::Union{Quadratization,Nothing})
+function quadratize(f::PBF, quad::Union{Quadratization,Nothing} = Quadratization{INFER})
     return quadratize!(copy(f), quad)
 end

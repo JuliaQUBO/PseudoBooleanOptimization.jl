@@ -67,7 +67,7 @@ function compare_results(results; keypath = "")
         end
     end
 
-    return report
+    return sort!(report)
 end
 
 function write_report(report, data_path)

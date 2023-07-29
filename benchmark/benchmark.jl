@@ -17,13 +17,17 @@ Random.seed!(0)
 
 const SUITE = BenchmarkGroup()
 
-include("constructors.jl")
+include("suites/constructors.jl")
 
 benchmark_constructors!(SUITE, PBO.PBF{Int,Float64})
 
-include("operators.jl")
+include("suites/operators.jl")
 
 benchmark_operators!(SUITE, PBO.PBF{Int,Float64})
+
+include("suites/quadratization.jl")
+
+benchmark_quadratization!(SUITE, PBO.PBF{Int,Float64})
 
 function benchmark_main(suite)
     data_path = joinpath(@__DIR__, "data")
