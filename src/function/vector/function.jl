@@ -1,7 +1,7 @@
 @doc raw"""
-    VectorFunction{V,T} <: AbstractFunction{V,T}
+    VectorFunction{V,T} <: AbstractPBF{V,T}
 """
-struct VectorFunction{V,T} <: AbstractFunction{V,T}
+struct VectorFunction{V,T} <: AbstractPBF{V,T}
     Ω::Vector{Term{V,T}}
 
     # standard constructor

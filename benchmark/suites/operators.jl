@@ -1,4 +1,4 @@
-function benchmark_operators!(suite, ::Type{F}) where {V,T,F<:PBO.AbstractFunction{V,T}}
+function benchmark_operators!(suite, ::Type{F}) where {V,T,F<:PBO.AbstractPBF{V,T}}
     suite["operators"] = BenchmarkGroup()
 
     benchmark_add!(suite, F)
@@ -11,7 +11,7 @@ function benchmark_operators!(suite, ::Type{F}) where {V,T,F<:PBO.AbstractFuncti
     return nothing
 end
 
-function benchmark_add!(suite, ::Type{F}) where {V,T,F<:PBO.AbstractFunction{V,T}}
+function benchmark_add!(suite, ::Type{F}) where {V,T,F<:PBO.AbstractPBF{V,T}}
     suite["operators"]["+"] = BenchmarkGroup()
     suite["operators"]["+"]["small"] = @benchmarkable(
         f + g;
@@ -31,7 +31,7 @@ function benchmark_add!(suite, ::Type{F}) where {V,T,F<:PBO.AbstractFunction{V,T
     return nothing
 end
 
-function benchmark_sub!(suite, ::Type{F}) where {V,T,F<:PBO.AbstractFunction{V,T}}
+function benchmark_sub!(suite, ::Type{F}) where {V,T,F<:PBO.AbstractPBF{V,T}}
     suite["operators"]["-"] = BenchmarkGroup()
     suite["operators"]["-"]["small"] = @benchmarkable(
         f - g;
@@ -51,7 +51,7 @@ function benchmark_sub!(suite, ::Type{F}) where {V,T,F<:PBO.AbstractFunction{V,T
     return nothing
 end
 
-function benchmark_mul!(suite, ::Type{F}) where {V,T,F<:PBO.AbstractFunction{V,T}}
+function benchmark_mul!(suite, ::Type{F}) where {V,T,F<:PBO.AbstractPBF{V,T}}
     suite["operators"]["*"] = BenchmarkGroup()
     suite["operators"]["*"]["small"] = @benchmarkable(
         f * g;
@@ -71,7 +71,7 @@ function benchmark_mul!(suite, ::Type{F}) where {V,T,F<:PBO.AbstractFunction{V,T
     return nothing
 end
 
-function benchmark_dict_evaluation!(suite, ::Type{F}) where {V,T,F<:PBO.AbstractFunction{V,T}}
+function benchmark_dict_evaluation!(suite, ::Type{F}) where {V,T,F<:PBO.AbstractPBF{V,T}}
     suite["operators"]["dict-evaluation"] = BenchmarkGroup()
     suite["operators"]["dict-evaluation"]["small"] = @benchmarkable(
         f(x);
@@ -91,7 +91,7 @@ function benchmark_dict_evaluation!(suite, ::Type{F}) where {V,T,F<:PBO.Abstract
     return nothing
 end
 
-function benchmark_set_evaluation!(suite, ::Type{F}) where {V,T,F<:PBO.AbstractFunction{V,T}}
+function benchmark_set_evaluation!(suite, ::Type{F}) where {V,T,F<:PBO.AbstractPBF{V,T}}
     suite["operators"]["set-evaluation"] = BenchmarkGroup()
     suite["operators"]["set-evaluation"]["small"] = @benchmarkable(
         f(x);

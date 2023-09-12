@@ -1,4 +1,4 @@
-function benchmark_quadratization!(suite, ::Type{F}) where {V,T,F<:PBO.AbstractFunction{V,T}}
+function benchmark_quadratization!(suite, ::Type{F}) where {V,T,F<:PBO.AbstractPBF{V,T}}
     suite["quadratization"] = BenchmarkGroup()
     suite["quadratization"]["automatic"] = BenchmarkGroup()
     suite["quadratization"]["automatic"]["small"] = @benchmarkable(

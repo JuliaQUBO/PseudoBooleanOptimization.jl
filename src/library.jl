@@ -107,7 +107,6 @@ function _rowwise_allunique(
     m, n = size(x)
 
     for i = 1:m
-
         u .= zero(S)
 
         for j = 1:n

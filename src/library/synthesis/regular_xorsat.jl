@@ -1,4 +1,5 @@
 @doc raw"""
+    k_regular_k_xorsat
 
 Generates a ``k``-regurlar ``k``-XORSAT instance with ``n`` boolean variables.
 """
@@ -8,7 +9,7 @@ function k_regular_k_xorsat(
     n::Integer,
     k::Integer;
     quad::Union{Quadratization,Nothing} = nothing,
-) where {V,T,F<:AbstractFunction{V,T}}
+) where {V,T,F<:AbstractPBF{V,T}}
     idx = zeros(Int, n, k)
 
     for j = 1:k, i = 1:n
@@ -59,7 +60,7 @@ function k_regular_k_xorsat(
     n::Integer,
     k::Integer;
     quad::Union{Quadratization,Nothing} = nothing,
-) where {V,T,F<:AbstractFunction{V,T}}
+) where {V,T,F<:AbstractPBF{V,T}}
     return k_regular_k_xorsat(Random.GLOBAL_RNG, F, n, k; quad)
 end
 
@@ -77,12 +78,14 @@ function r_regular_k_xorsat(
     r::Integer,
     k::Integer;
     quad::Union{Quadratization,Nothing} = nothing,
-) where {V,T,F<:AbstractFunction{V,T}}
+) where {V,T,F<:AbstractPBF{V,T}}
     if r == k
         return k_regular_k_xorsat(rng, F, n, k; quad)
     else
         # NOTE: This might involve Sudoku solving!
-        error("A method for generating r-regular k-XORSAT where r ≂̸ k is not implemented")
+        error("A method for generating r-regular k-XORSAT where r ≂̸ k is not implemented (yet).")
+
+        return nothing
     end
 end
 
@@ -92,6 +95,6 @@ function r_regular_k_xorsat(
     r::Integer,
     k::Integer;
     quad::Union{Quadratization,Nothing} = nothing,
-) where {V,T,F<:AbstractFunction{V,T}}
+) where {V,T,F<:AbstractPBF{V,T}}
     return r_regular_k_xorsat(Random.GLOBAL_RNG, F, n, r, k; quad)
 end

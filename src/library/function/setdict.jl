@@ -1,11 +1,21 @@
+const SetDict{V,T} = Dict{Set{V},T}
+
+const SetDictKey{V} = Union{AbstractSet{V},AbstractVector{V},Nothing}
+
+function PBF{V,T,S}() where {V,T,S<:SetDict{V,T}}
+    return PBF{V,T,S}(SetDict{V,T}())
+end
+
+function PBF{V,T}(Ω::Dict{SetDictKey{V},T}) where {V,T}
+    return new{V,T,SetDict{V,T}}(
+        SetDict{V,T}((isnothing(ω) ? Set{V}() : ω) => c for (ω, c) in Ω if !iszero(c))
+    )
+end
+
 struct DictFunction{V,T} <: AbstractPBF{V,T}
     Ω::Dict{Set{V},T}
 
-    function DictFunction{V,T}(Ω::Dict{<:Union{Set{V},Nothing},T}) where {V,T}
-        return new{V,T}(
-            Dict{Set{V},T}(isnothing(ω) ? Set{V}() : ω => c for (ω, c) in Ω if !iszero(c)),
-        )
-    end
+    
 
     function DictFunction{V,T}(v::AbstractVector) where {V,T}
         Ω = Dict{Set{V},T}()
@@ -97,6 +107,3 @@ function Base.sizehint!(f::DictFunction, n::Integer)
 
     return f
 end
-
-include("interface.jl")
-include("operators.jl")

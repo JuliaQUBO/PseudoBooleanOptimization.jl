@@ -5,24 +5,20 @@ using LinearAlgebra
 using MutableArithmetics
 const MA = MutableArithmetics
 
-include("library.jl")
-include("interface.jl")
+# Interface Definition
+include("interface/variable.jl")
+include("interface/function.jl")
+include("interface/quadratization.jl")
 
-include("function/abstract.jl")
-include("function/term.jl")
-include("function/dict/function.jl")
-# include("function/vector/function.jl")
-
-# This selects the implementation onwards
-const PBF{V,T} = DictFunction{V,T}
-
-include("print.jl")
-include("quadratization.jl")
+# include("library/print.jl")
+# include("library/quadratization/abstract.jl")
+# include("library/quadratization/ntr_kzfd.jl")
+# include("library/quadratization/ptr_bg.jl")
 
 # Synthetic PBF generation
-include("synthesis/wishart.jl")
-include("synthesis/regular_xorsat.jl")
-include("synthesis/sherrington_kirkpatrick.jl")
-include("synthesis/not_all_equal_3sat.jl")
+# include("library/synthesis/wishart.jl")
+# include("library/synthesis/regular_xorsat.jl")
+# include("library/synthesis/sherrington_kirkpatrick.jl")
+# include("library/synthesis/not_all_equal_3sat.jl")
 
 end # module PseudoBooleanOptimization
