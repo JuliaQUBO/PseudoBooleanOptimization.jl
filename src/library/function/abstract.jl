@@ -2,12 +2,34 @@ function bounds(f::AbstractPBF)
     return (lowerbound(f), upperbound(f))
 end
 
-function discretize(f::AbstractPBF{V,T}; tol::T = 1E-6) where {V,T}
-    return discretize!(copy(f); tol)
+function degree(f::AbstractPBF)
+    return maximum(length.(keys(f)); init = 0)
 end
 
-function gradient(f::AbstractPBF{V,T}, x::Vector{V}) where {V,T}
-    return [derivative(f, xi) for xi in x]
+function residual(f::F, x::V) where {V,T,F<:AbstractPBF{V,T}}
+    return F(ω => c for (ω, c) ∈ f if (x ∉ ω))
+end
+
+function discretize!(f::AbstractPBF{_,T}; tol::T = T(1E-6))  where {_,T}
+    ε = mingap(f; tol)
+
+    for (ω, c) in f
+        f[ω] = round(c / ε; digits = 0)
+    end
+
+    return f
+end
+
+function discretize(f::AbstractPBF{V,T}; atol::T = 1E-6) where {V,T}
+    return discretize!(copy(f); atol)
+end
+
+function derivative(f::F, x::V) where {V,T,F<:AbstractPBF{V,T}}
+    return F(ω => f[ω×x] for ω ∈ keys(f) if (x ∉ ω))
+end
+
+function gradient(f::F, x::Vector{V}) where {V,T,F<:AbstractPBF{V,T}}
+    return F[derivative(f, xi) for xi in x]
 end
 
 function maxgap(f::F) where {V,T,F<:AbstractPBF{V,T}}

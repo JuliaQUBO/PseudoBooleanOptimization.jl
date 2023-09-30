@@ -1,11 +1,4 @@
 @doc raw"""
-
-"""
-abstract type AbstractPseudoBooleanTerm{V,T} end
-
-const AbstractPBT{V,T} = AbstractPseudoBooleanTerm{V,T}
-
-@doc raw"""
     AbstractPseudoBooleanFunction{V,T}
 
 A pseudo-Boolean Function[^Boros2002] ``f \in \mathscr{F}`` over some field ``\mathbb{T}`` takes the form
@@ -27,9 +20,24 @@ abstract type AbstractPseudoBooleanFunction{V,T} end
 const AbstractPBF{V,T} = AbstractPseudoBooleanFunction{V,T}
 
 @doc raw"""
+    AbstractForm{V,T}
+"""
+abstract type AbstractForm{V,T} end
+
+@doc raw"""
     term
 """
 function term end
+
+@doc raw"""
+    term_head
+"""
+function term_head end
+
+@doc raw"""
+    term_tail
+"""
+function term_tail end
 
 @doc raw"""
     maxgap(f::AbstractPBF{V,T}) where {V,T}

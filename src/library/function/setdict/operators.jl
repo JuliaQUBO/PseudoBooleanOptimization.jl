@@ -1,20 +1,3 @@
-#  Comparison: (==)
-Base.:(==)(f::DictFunction{V,T}, g::DictFunction{V,T}) where {V,T} = (f.Ω == g.Ω)
-
-function Base.isapprox(f::DictFunction{V,T}, g::DictFunction{V,T}; kw...) where {V,T}
-    return (length(f) == length(g)) && all(haskey(g, ω) && isapprox(g[ω], f[ω]; kw...) for ω in keys(f))
-end
-
-function isscalar(f::DictFunction)
-    return isempty(f) || (length(f) == 1 && haskey(f, nothing))
-end
-
-Base.zero(::Type{DictFunction{V,T}}) where {V,T}    = DictFunction{V,T}()
-Base.iszero(f::DictFunction)                        = isempty(f)
-Base.one(::Type{DictFunction{V,T}}) where {V,T}     = DictFunction{V,T}(one(T))
-Base.isone(f::DictFunction)                         = isscalar(f) && isone(f[nothing])
-Base.round(f::DictFunction{V,T}; kw...) where {V,T} = DictFunction{V,T}(ω => round(c; kw...) for (ω, c) in f)
-
 #  Arithmetic: (+) 
 function Base.:(+)(f::DictFunction{V,T}, g::DictFunction{V,T}) where {V,T}
     h = copy(f)

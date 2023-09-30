@@ -10,6 +10,8 @@ include("unit/unit.jl")
 
 function main()
     test_unit()
+
+    return nothing
 end
 
 main() # Here we go!
