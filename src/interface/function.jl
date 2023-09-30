@@ -20,9 +20,9 @@ abstract type AbstractPseudoBooleanFunction{V,T} end
 const AbstractPBF{V,T} = AbstractPseudoBooleanFunction{V,T}
 
 @doc raw"""
-    AbstractForm{V,T}
+    isscalar(f::AbstractPBF)::Bool
 """
-abstract type AbstractForm{V,T} end
+function isscalar end
 
 @doc raw"""
     term

@@ -20,25 +20,27 @@ struct PTR_BG <: QuadratizationMethod end
 function quadratize!(
     aux,
     f::F,
-    ω::Set{V},
+    ω::Any,
     c::T,
     quad::Quadratization{PTR_BG},
 ) where {V,T,F<:AbstractPBF{V,T}}
+    ω_ = term_head(F, ω)
+
     # Degree
-    k = length(ω)
+    k = length(ω_)
 
     # Fast-track
     k < 3 && return nothing
 
     # Variables
     s = aux(k - 2)::Vector{V}
-    b = collect(ω)::Vector{V}
+    b = collect(ω_)::Vector{V}
 
     # Stabilization
     quad.stable && sort!(b; lt = varlt)
 
     # Quadratization
-    delete!(f, ω)
+    delete!(f, ω_)
 
     f[b[k]×b[k-1]] += c
 

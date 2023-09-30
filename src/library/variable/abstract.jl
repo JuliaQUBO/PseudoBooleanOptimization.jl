@@ -70,8 +70,3 @@ function varmul(u::AbstractVector{V}, v::AbstractVector{V}) where {V}
     # @assert issorted(u) && issorted(v)
     return sortedmergewith(u, v; lt = varlt)
 end
-
-
-varshow(io::IO, v::V) where {V}                       = show(io, varshow(v))
-varshow(v::Integer)                                   = "x$(_subscript(v))"
-varshow(v::V) where {V<:Union{Symbol,AbstractString}} = string(v)

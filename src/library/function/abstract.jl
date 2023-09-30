@@ -49,11 +49,9 @@ function upperbound(f::F) where {V,T,F<:AbstractPBF{V,T}}
 end
 
 function Base.convert(::Type{U}, f::AbstractPBF{V,T}) where {V,T,U<:Number}
-    if isempty(f)
-        return zero(U)
-    elseif degree(f) == 0
+    if isscalar(f)
         return convert(U, f[nothing])
     else
-        error("Can't convert non-constant pseudo-Boolean function to scalar type '$U'")
+        error("Can't convert non-scalar pseudo-Boolean function to scalar type '$U'")
     end
 end

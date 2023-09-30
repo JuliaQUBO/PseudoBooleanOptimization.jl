@@ -19,12 +19,16 @@ struct NTR_KZFD <: QuadratizationMethod end
 function quadratize!(
     aux,
     f::F,
-    ω::Set{V},
+    ω::Any,
     c::T,
     ::Quadratization{NTR_KZFD},
 ) where {V,T,F<:AbstractPBF{V,T}}
+    @assert c < zero(T)
+
+    ω_ = term_head(F, ω)
+
     # Degree
-    k = length(ω)
+    k = length(ω_)
 
     # Fast-track
     k < 3 && return nothing
@@ -36,11 +40,11 @@ function quadratize!(
     # NOTE: This method is stable by construction
 
     # Quadratization
-    delete!(f, ω)
+    delete!(f, ω_)
 
     f[s] += -c * (k - 1)
 
-    for i ∈ ω
+    for i ∈ ω_
         f[i×s] += c
     end
 

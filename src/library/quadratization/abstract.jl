@@ -7,15 +7,15 @@ struct DEFAULT <: QuadratizationMethod end
 
 function quadratize!(
     aux,
-    f::PBF{V,T},
-    ω::Set{V},
+    f::AbstractPBF{V,T},
+    ω::Any,
     c::T,
     quad::Quadratization{DEFAULT},
 ) where {V,T}
     if c < zero(T)
-        quadratize!(aux, f, ω, c, Quadratization{NTR_KZFD}(quad.stable))
+        quadratize!(aux, f, ω, c, Quadratization(NTR_KZFD(); stable=quad.stable))
     else
-        quadratize!(aux, f, ω, c, Quadratization{PTR_BG}(quad.stable))
+        quadratize!(aux, f, ω, c, Quadratization(PTR_BG(); stable=quad.stable))
     end
 
     return f
@@ -23,7 +23,7 @@ end
 
 function quadratize!(
     aux,
-    f::PBF{V,T},
+    f::AbstractPBF{V,T},
     quad::Quadratization,
 ) where {V,T}
     # Collect Terms
@@ -45,11 +45,11 @@ end
 struct INFER <: QuadratizationMethod end
 
 @doc raw"""
-    infer_quadratization(f::PBF)
+    infer_quadratization(f::AbstractPBF)
 
 For a given PBF, returns whether it should be quadratized or not, based on its degree.
 """
-function infer_quadratization(f::PBF, stable::Bool = false)
+function infer_quadratization(f::AbstractPBF, stable::Bool = false)
     k = degree(f)
 
     if k <= 2
@@ -57,85 +57,28 @@ function infer_quadratization(f::PBF, stable::Bool = false)
     else
         # Without any extra knowledge, it is better to
         # quadratize using the default approach
-        return Quadratization{DEFAULT}(stable)
+        return Quadratization(DEFAULT(); stable)
     end
 end
 
-function quadratize!(aux, f::PBF, quad::Quadratization{INFER})
+function quadratize!(aux, f::AbstractPBF, quad::Quadratization{INFER})
     quadratize!(aux, f, infer_quadratization(f, quad.stable))
 
     return f
 end
 
-function quadratize!(::Function, f::PBF, ::Nothing)
+function quadratize!(::Function, f::AbstractPBF, ::Nothing)
     return f
 end
 
-@doc raw"""
-    auxgen(::AbstractPBF{V,T}; name::AbstractString = "aux") where {V<:AbstractString,T}
-
-Creates a function that, when called multiple times, returns the strings `"aux_1"`, `"aux_2"`, ... and so on.
-
-    auxgen(::AbstractPBF{Symbol,T}; name::Symbol = :aux) where {T}
-
-Creates a function that, when called multiple times, returns the symbols `:aux_1`, `:aux_2`, ... and so on.
-
-    auxgen(::AbstractPBF{V,T}; start::V = V(0), step::V = V(-1)) where {V<:Integer,T}
-
-Creates a function that, when called multiple times, returns the integers ``-1``, ``-2``, ... and so on.
-"""
-function auxgen end
-
-function auxgen(::AbstractPBF{Symbol,T}; name::Symbol = :aux) where {T}
-    counter = Int[0]
-
-    function aux(n::Union{Integer,Nothing} = nothing)
-        if isnothing(n)
-            return first(aux(1))
-        else
-            return [Symbol("$(name)_$(counter[] += 1)") for _ in 1:n]
-        end
-    end
-
-    return aux
-end
-
-function auxgen(::AbstractPBF{V,T}; name::AbstractString = "aux") where {V<:AbstractString,T}
-    counter = Int[0]
-
-    function aux(n::Union{Integer,Nothing} = nothing)
-        if isnothing(n)
-            return first(aux(1))
-        else
-            return ["$(name)_$(counter[] += 1)" for _ in 1:n]
-        end
-    end
-
-    return aux
-end
-
-function auxgen(::AbstractPBF{V,T}; start::V = V(0), step::V = V(-1)) where {V<:Integer,T}
-    counter = [start]
-
-    function aux(n::Union{Integer,Nothing} = nothing)
-        if isnothing(n)
-            return first(aux(1))
-        else
-            return [(counter[] += step) for _ in 1:n]
-        end
-    end
-
-    return aux
-end
-
-function quadratize!(f::PBF, quad::Union{Quadratization,Nothing} = Quadratization{INFER})
+function quadratize!(f::AbstractPBF, quad::Union{Quadratization,Nothing} = Quadratization(INFER()))
     return quadratize!(auxgen(f), f, quad)
 end
 
-function quadratize(aux, f::PBF, quad::Union{Quadratization,Nothing} = Quadratization{INFER})
+function quadratize(aux, f::AbstractPBF, quad::Union{Quadratization,Nothing} = Quadratization(INFER()))
     return quadratize!(aux, copy(f), quad)
 end
 
-function quadratize(f::PBF, quad::Union{Quadratization,Nothing} = Quadratization{INFER})
+function quadratize(f::AbstractPBF, quad::Union{Quadratization,Nothing} = Quadratization(INFER()))
     return quadratize!(copy(f), quad)
 end

@@ -10,16 +10,23 @@ include("interface/variable.jl")
 include("interface/function.jl")
 include("interface/quadratization.jl")
 
-# include("library/variable/abstract.jl")
-# include("library/variable/mapping.jl")
+# Utility Functions
+include("library/mod2linsolve.jl")
+include("library/relaxedgcd.jl")
+include("library/sortedmerge.jl")
+
+include("library/variable/abstract.jl")
+include("library/variable/auxgen.jl")
+include("library/variable/print.jl")
 
 include("library/function/abstract.jl")
 include("library/function/function.jl")
-include("library/function/setdict.jl")
+include("library/function/operators.jl")
+include("library/function/setdict/setdict.jl")
 
-# include("library/quadratization/abstract.jl")
-# include("library/quadratization/ntr_kzfd.jl")
-# include("library/quadratization/ptr_bg.jl")
+include("library/quadratization/abstract.jl")
+include("library/quadratization/ntr_kzfd.jl")
+include("library/quadratization/ptr_bg.jl")
 
 # Synthetic PBF generation
 # include("library/synthesis/wishart.jl")

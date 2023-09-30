@@ -110,18 +110,15 @@ function Base.delete!(f::F, ω) where {V,T,F<:PBF{V,T,SetDict{V,T}}}
     return f
 end
 
-#####
 
-
-
-
-function isscalar(f::DictFunction)
+function isscalar(f::PBF{V,T,SetDict{V,T}}) where {V,T}
     return isempty(f) || (length(f) == 1 && haskey(f, nothing))
 end
 
-Base.zero(::Type{DictFunction{V,T}}) where {V,T}    = DictFunction{V,T}()
-Base.iszero(f::DictFunction)                        = isempty(f)
-Base.one(::Type{DictFunction{V,T}}) where {V,T}     = DictFunction{V,T}(one(T))
-Base.isone(f::DictFunction)                         = isscalar(f) && isone(f[nothing])
-Base.round(f::DictFunction{V,T}; kw...) where {V,T} = DictFunction{V,T}(ω => round(c; kw...) for (ω, c) in f)
+function Base.iszero(f::PBF{V,T,SetDict{V,T}}) where {V,T}
+    return isempty(f)
+end
 
+function Base.isone(f::PBF{V,T,SetDict{V,T}}) where {V,T}
+    return isscalar(f) && isone(f[nothing])
+end

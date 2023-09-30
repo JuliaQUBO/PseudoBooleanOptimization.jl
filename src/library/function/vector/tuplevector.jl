@@ -1,38 +1,6 @@
-@doc raw"""
-    VectorFunction{V,T} <: AbstractPBF{V,T}
-"""
-struct VectorFunction{V,T} <: AbstractPBF{V,T}
-    Ω::Vector{Term{V,T}}
+const TupleVector{V,T} = Vector{Pair{Tuple{Vararg{V}},T}}
 
-    # standard constructor
-    function VectorFunction{V,T}(v::AbstractVector{Term{V,T}}, ready::Bool = false) where {V,T}
-        if ready
-            Ω = v
-        else
-            Ω = sort!(filter(!iszero ∘ last, v); alg=QuickSort, lt=varlt)
-        end
 
-        return new{V,T}(Ω)
-    end
-
-    # heterogeneous list
-    function VectorFunction{V,T}(x::AbstractVector) where {V,T}
-        return VectorFunction{V,T}(Term{V,T}.(x))
-    end
-
-    # dictionary
-    function VectorFunction{V,T}(x::AbstractDict) where {V,T}
-        return VectorFunction{V,T}(Term{V,T}.(pairs(x)))
-    end
-
-    # fallback
-    function VectorFunction{V,T}(x::Any) where {V,T}
-        return VectorFunction{V,T}(Term{V,T}[Term{V,T}(x)])
-    end
-end
-
-# Broadcast as scalar ?
-Base.broadcastable(f::VectorFunction) = f
 
 # Copy 
 function Base.sizehint!(f::VectorFunction, n::Integer)
