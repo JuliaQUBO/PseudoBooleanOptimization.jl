@@ -64,53 +64,7 @@ end
 Base.:(-)(c, f::DictFunction{V,T}) where {V,T} = -(convert(T, c), f)
 Base.:(-)(f::DictFunction{V,T}, c) where {V,T} = -(f, convert(T, c))
 
-#  Arithmetic: (*) 
-function Base.:(*)(f::DictFunction{V,T}, g::DictFunction{V,T}) where {V,T}
-    h = zero(DictFunction{V,T})
-    m = length(f)
-    n = length(g)
 
-    if iszero(f) || iszero(g) # T(n) = O(1)
-        return h
-    elseif f === g # T(n) = O(n) + O(n^2 / 2)
-        k = collect(f)
-
-        sizehint!(h, n^2 ÷ 2)
-
-        for i = 1:n
-            ωi, ci = k[i]
-
-            h[ωi] += ci * ci
-
-            for j = (i+1):n
-                ωj, cj = k[j]
-
-                h[ωi × ωj] += 2 * ci * cj
-            end
-        end
-
-        return h
-    else # T(n) = O(m n)
-        sizehint!(h, m * n)
-
-        for (ωᵢ, cᵢ) in f, (ωⱼ, cⱼ) in g
-            h[ωᵢ × ωⱼ] += cᵢ * cⱼ
-        end
-
-        return h
-    end
-end
-
-function Base.:(*)(f::DictFunction{V,T}, a::T) where {V,T}
-    if iszero(a)
-        return DictFunction{V,T}()
-    else
-        return DictFunction{V,T}(ω => c * a for (ω, c) ∈ f)
-    end
-end
-
-Base.:(*)(f::DictFunction{V,T}, a) where {V,T} = *(f, convert(T, a))
-Base.:(*)(a, f::DictFunction)                  = *(f, a)
 
 #  Arithmetic: (/) 
 function Base.:(/)(f::DictFunction{V,T}, a::T) where {V,T}

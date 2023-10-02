@@ -30,8 +30,18 @@ function not_all_equal_3sat(rng, ::Type{F}, n::Integer, m::Integer) where {V,T,F
     end
 
     # Convert to boolean
-    # s = 2x - 1
-    f = sum([J[i,j] * F(i => T(2), T(-1)) * F(j => T(2), T(-1)) for (i,j) in keys(J)])
+    # let s_i = 2x_i - 1
+    # ⟹ s_i s_j = (2x_i - 1) (2x_j - 1) = 4x_i x_j - 2x_i - 2x_j + 1
+    # ⟹ Jij s_i s_j = 4Jij x_i x_j - 2Jij x_i - 2Jij x_j + Jij
+    f = sizehint!(zero(F), length(J) + n)
+
+    for ((i, j), c) in J
+        f[i, j]    += 4c
+        f[i]       -= 2c
+        f[j]       -= 2c
+        f[nothing] += c
+    end
+
     x = nothing # no planted solutions
 
     return (f, x)

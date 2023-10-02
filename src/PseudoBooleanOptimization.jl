@@ -15,9 +15,11 @@ include("library/mod2linsolve.jl")
 include("library/relaxedgcd.jl")
 include("library/sortedmerge.jl")
 
-include("library/variable/abstract.jl")
-include("library/variable/auxgen.jl")
-include("library/variable/print.jl")
+include("library/variable/varlt.jl")
+include("library/variable/vargen.jl")
+include("library/variable/varmap.jl")
+include("library/variable/varmul.jl")
+include("library/variable/varshow.jl")
 
 include("library/function/abstract.jl")
 include("library/function/function.jl")
@@ -29,9 +31,9 @@ include("library/quadratization/ntr_kzfd.jl")
 include("library/quadratization/ptr_bg.jl")
 
 # Synthetic PBF generation
-# include("library/synthesis/wishart.jl")
-# include("library/synthesis/regular_xorsat.jl")
-# include("library/synthesis/sherrington_kirkpatrick.jl")
-# include("library/synthesis/not_all_equal_3sat.jl")
+include("library/synthesis/wishart.jl")
+include("library/synthesis/regular_xorsat.jl")
+include("library/synthesis/sherrington_kirkpatrick.jl")
+include("library/synthesis/not_all_equal_3sat.jl")
 
 end # module PseudoBooleanOptimization
