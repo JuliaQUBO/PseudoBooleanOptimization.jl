@@ -13,7 +13,7 @@ function k_regular_k_xorsat(
     idx = zeros(Int, n, k)
 
     for j = 1:k, i = 1:n
-        idx[i,j] = i
+        idx[i, j] = i
     end
 
     A = Matrix{Int}(undef, n, n)
@@ -47,13 +47,12 @@ function k_regular_k_xorsat(
             # Convert to boolean
             # s = 2x - 1
             # ∑ᵢ (-1)^cᵢ ∏ⱼ (2xᵢⱼ - 1) = ∑ᵢ (-1)^c[i] (2xᵢ₁ - 1) ⋯ (2xᵢₖ - 1) = 2^
-            f = sum((-1.0)^c[i] * prod([F(idx[i,j] => 2.0, -1.0) for j = 1:k]) for i = 1:n)
+            f = sum((-1.0)^c[i] * prod([F(idx[i, j] => 2.0, -1.0) for j = 1:k]) for i = 1:n)
 
             quadratize!(f, quad)
 
-            x = nothing # no planted solutions
-
-            return (f, x)
+            # TODO: Return planted solution
+            return (f, Dict{V,Int}[]) # no planted solutions
         end
     end
 
@@ -88,7 +87,9 @@ function r_regular_k_xorsat(
         return k_regular_k_xorsat(rng, F, n, k; quad)
     else
         # NOTE: This might involve solving Sudoku!
-        error("A method for generating r-regular k-XORSAT where r ≂̸ k is not implemented (yet).")
+        error(
+            "A method for generating r-regular k-XORSAT where r ≂̸ k is not implemented (yet).",
+        )
 
         return nothing
     end

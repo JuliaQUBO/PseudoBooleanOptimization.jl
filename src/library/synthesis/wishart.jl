@@ -1,11 +1,12 @@
 @doc raw"""
     wishart(rng, n::Integer, m::Integer)
 
-Generate a ``K_{n}`` (complete graph) Ising weight matrix ``J`` with the ``(+)^{n}`` state as a planted GS.
+Generate a ``K_{n}`` (complete graph) Ising weight matrix ``J`` with the
+``\mathbf{1} \in {\pm 1}^{n}`` state as a planted ground state.
 
-Diagonal of ``J`` is zero.
+The main diagonal of ``J`` is zero.
 
-Hamiltonian is zero field, i.e:
+The Hamiltonian is zero field, i.e,
 
 ```math
 E(\mathbf{s}) = -\frac{1}{2} \mathbf{s}' J \mathbf{s}
@@ -20,17 +21,24 @@ Alternatively, can even replace the Gaussian with a bounded range uniform discre
 """
 function wishart end
 
-function wishart(rng, ::Type{F}, n::Integer, m::Integer = 1; discretize_bonds::Bool = false, precision = nothing) where {V,T,F<:AbstractPBF{V,T}}
-    # Plants the FM GS
-    t = ones(n, 1)
+function wishart(
+    rng,
+    ::Type{F},
+    n::Integer,
+    m::Integer = 1;
+    discretize_bonds::Bool = false,
+    precision = nothing,
+) where {V,T,F<:AbstractPBF{V,T}}
+    # Plants the FM ground state
+    s = ones(Int, n)
 
     # Sample correlated Gaussian with covariance matrix sigma
     # NOTE: rank(sigma) = n - 1
-    σ = (n * I - (t * t')) / (n - 1)
-    s = √((n - 1) / n) * σ
+    σ = (n * I - (s * s')) / (n - 1)
+    θ = √((n - 1) / n) * σ
 
     if discretize_bonds
-        R = rand(rng, (-1,+1), n, m)
+        R = rand(rng, (-1, +1), n, m)
     else
         R = randn(rng, n, m)
 
@@ -39,17 +47,17 @@ function wishart(rng, ::Type{F}, n::Integer, m::Integer = 1; discretize_bonds::B
         end
     end
 
-    W = s'R
+    W = θ'R
     J = W * W'
-    
+
     for i = 1:n
-        J[i,i] = zero(T)
+        J[i, i] = zero(T)
     end
 
     if discretize_bonds
-        map!(x -> round((n^2 - n^3) * x; digits = precision), J, J)
+        map!(x -> round((n^2 - n^3) * x; digits = something(precision, 0)), J, J)
     else
-        map!(x -> round((n - n^2) * x; digits = precision), J, J)
+        map!(x -> round((n - n^2) * x; digits = something(precision, 0)), J, J)
     end
 
     # Convert to boolean
@@ -59,19 +67,28 @@ function wishart(rng, ::Type{F}, n::Integer, m::Integer = 1; discretize_bonds::B
     f = sizehint!(zero(F), n^2 ÷ 2)
 
     for i = 1:n, j = 1:n
+        xi = varmap(V, i)
+        xj = varmap(V, j)
+
         c = J[i, j]
 
-        f[i, j]    += 4c
-        f[i]       -= 2c
-        f[j]       -= 2c
+        f[xi, xj]  += 4c
+        f[xi]      -= 2c
+        f[xj]      -= 2c
         f[nothing] += c
     end
 
-    x = [t] # planted solution
+    x = Dict{V,Int}[Dict{V,Int}(varmap(V, i) => (s[i] + 1) ÷ 2 for i = 1:n)]
 
-    return (f, x)
+    return (f, x) # one planted solution! Yeah!
 end
 
-function wishart(::Type{F}, n::Integer, m::Integer = 1; discretize_bonds::Bool = false, precision = nothing) where {V,T,F<:AbstractPBF{V,T}}
-    return wishart(GLOBAL_RNG, F, n, m; discretize_bonds, precision)
+function wishart(
+    ::Type{F},
+    n::Integer,
+    m::Integer = 1;
+    discretize_bonds::Bool = false,
+    precision = nothing,
+) where {V,T,F<:AbstractPBF{V,T}}
+    return wishart(Random.GLOBAL_RNG, F, n, m; discretize_bonds, precision)
 end

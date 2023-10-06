@@ -72,7 +72,7 @@ function quadratize!(::Function, f::AbstractPBF, ::Nothing)
 end
 
 function quadratize!(f::AbstractPBF, quad::Union{Quadratization,Nothing} = Quadratization(INFER()))
-    return quadratize!(auxgen(f), f, quad)
+    return quadratize!(vargen(f; start = -1, step = -1), f, quad)
 end
 
 function quadratize(aux, f::AbstractPBF, quad::Union{Quadratization,Nothing} = Quadratization(INFER()))

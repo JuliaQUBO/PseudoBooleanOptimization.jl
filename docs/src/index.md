@@ -7,8 +7,7 @@ f(\mathbf{x}) = \sum_{\omega \subseteq [n]} c_{\omega} \prod_{j \in \omega} x_{j
 ## Getting Started
 
 ```@example
-using PseudoBooleanOptimization
-const PBO = PseudoBooleanOptimization
+import PseudoBooleanOptimization as PBO
 
 f = PBO.PBF{Symbol,Float64}(
     :x       => 3.0,
@@ -17,5 +16,5 @@ f = PBO.PBF{Symbol,Float64}(
     -100.0,
 )
 
-g = f^2 - f
+g = f^2 - 2f
 ```

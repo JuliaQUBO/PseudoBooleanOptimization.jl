@@ -5,7 +5,12 @@ Generates Not-all-equal 3-SAT problem with ``m`` variables and ``n`` clauses.
 """
 function not_all_equal_3sat end
 
-function not_all_equal_3sat(rng, ::Type{F}, n::Integer, m::Integer) where {V,T,F<:AbstractPBF{V,T}}
+function not_all_equal_3sat(
+    rng,
+    ::Type{F},
+    n::Integer,
+    m::Integer,
+) where {V,T,F<:AbstractPBF{V,T}}
     J = Dict{Tuple{Int,Int},T}()
 
     C = BitSet(1:n)
@@ -19,8 +24,8 @@ function not_all_equal_3sat(rng, ::Type{F}, n::Integer, m::Integer) where {V,T,F
         for j = 1:3
             c[j] = pop!(C, rand(rng, C))
         end
-        
-        s .= rand(rng, (-1,+1), 3)
+
+        s .= rand(rng, (-1, +1), 3)
 
         for i = 1:3, j = (i+1):3 # i < j
             x = (c[i], c[j])
@@ -36,17 +41,22 @@ function not_all_equal_3sat(rng, ::Type{F}, n::Integer, m::Integer) where {V,T,F
     f = sizehint!(zero(F), length(J) + n)
 
     for ((i, j), c) in J
-        f[i, j]    += 4c
-        f[i]       -= 2c
-        f[j]       -= 2c
+        xi = varmap(V, i)
+        xj = varmap(V, j)
+
+        f[xi, xj]  += 4c
+        f[xi]      -= 2c
+        f[xj]      -= 2c
         f[nothing] += c
     end
 
-    x = nothing # no planted solutions
-
-    return (f, x)
+    return (f, Dict{V,Int}[]) # no planted solutions
 end
 
-function not_all_equal_3sat(::Type{F}, n::Integer, m::Integer) where {V,T,F<:AbstractPBF{V,T}}
+function not_all_equal_3sat(
+    ::Type{F},
+    n::Integer,
+    m::Integer,
+) where {V,T,F<:AbstractPBF{V,T}}
     return not_all_equal_3sat(Random.GLOBAL_RNG, F, n, m)
 end

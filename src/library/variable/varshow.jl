@@ -1,11 +1,3 @@
-function _subscript(i::Integer)
-    if i < 0
-        return "₋$(_subscript(abs(i)))"
-    else
-        return join(reverse!(digits(i)) .+ Char(0x2080))
-    end
-end
-
 varshow(io::IO, v::V) where {V}                       = show(io, varshow(v))
 varshow(v::Integer, x::AbstractString = "x")          = "$(x)$(_subscript(v))"
 varshow(v::V) where {V<:Union{Symbol,AbstractString}} = string(v)
@@ -43,8 +35,6 @@ function Base.show(io::IO, ::MIME"text/plain", f::AbstractPBF{V,T}) where {V,T}
 
     return nothing
 end
-
-
 
 # function Base.show(io::IO, f::VectorFunction{V,T}) where {V,T}
 #     join(io, f.Ω, " + ")

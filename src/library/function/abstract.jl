@@ -1,3 +1,11 @@
+function Base.zero(::F) where {V,T,F<:AbstractPBF{V,T}}
+    return zero(F)
+end
+
+function Base.one(::F) where {V,T,F<:AbstractPBF{V,T}}
+    return one(F)
+end
+
 function bounds(f::AbstractPBF)
     return (lowerbound(f), upperbound(f))
 end
@@ -10,18 +18,22 @@ function residual(f::F, x::V) where {V,T,F<:AbstractPBF{V,T}}
     return F(ω => c for (ω, c) ∈ f if (x ∉ ω))
 end
 
-function discretize!(f::AbstractPBF{_,T}; tol::T = T(1E-6))  where {_,T}
-    ε = mingap(f; tol)
-
-    for (ω, c) in f
-        f[ω] = round(c / ε; digits = 0)
-    end
+function Base.round(f::AbstractPBF; kws...)
+    map!(c -> round(c; kws...), f)
 
     return f
 end
 
-function discretize(f::AbstractPBF{V,T}; atol::T = 1E-6) where {V,T}
-    return discretize!(copy(f); atol)
+function discretize!(f::AbstractPBF{_,T}; tol::T = T(1E-6))  where {_,T}
+    ε = mingap(f; tol)
+
+    map!(c -> round(c / ε; digits = 0), f)
+
+    return f
+end
+
+function discretize(f::AbstractPBF{V,T}; tol::T = 1E-6) where {V,T}
+    return discretize!(copy(f); tol)
 end
 
 function derivative(f::F, x::V) where {V,T,F<:AbstractPBF{V,T}}

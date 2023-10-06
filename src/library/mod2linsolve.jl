@@ -50,6 +50,10 @@ end
 function _mod2_numsolutions!(A::AbstractMatrix{U}, b::AbstractVector{U}) where {U<:Integer}
     _mod2_elimination!(A, b)
 
+    return _mod2_numsolutions(A, b)
+end
+
+function _mod2_numsolutions(A::AbstractMatrix{U}, b::AbstractVector{U}) where {U<:Integer}
     m, n = size(A)
 
     # start with full rank
@@ -57,7 +61,7 @@ function _mod2_numsolutions!(A::AbstractMatrix{U}, b::AbstractVector{U}) where {
 
     @inbounds for i = 1:m
         if iszero(@view(A[i, :])) # all-zero row encountered
-            if !iszero(b[i])     # no solutions
+            if !iszero(b[i])      # no solutions
                 return 0
             end
 

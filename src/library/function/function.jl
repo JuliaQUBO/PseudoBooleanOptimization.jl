@@ -20,3 +20,22 @@ function Base.promote_rule(::Type{PBF{V,Tf,S}}, ::Type{PBF{V,Tg,S}}) where {V,Tf
 
     return PBF{V,T,S}
 end
+
+# Constructors
+function PBF{V,T,S}(items) where {V,T,S}
+    @assert Base.haslength(items)
+
+    f = sizehint!(zero(PBF{V,T,S}), length(items))
+
+    for x in items
+        ω, c = term(PBF{V,T,S}, x)
+
+        f[ω] += c
+    end
+
+    return f
+end
+
+function PBF{V,T,S}(args...) where {V,T,S}
+    return PBF{V,T,S}(args)
+end

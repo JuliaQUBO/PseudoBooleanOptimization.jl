@@ -11,6 +11,7 @@ include("interface/function.jl")
 include("interface/quadratization.jl")
 
 # Utility Functions
+include("library/subscript.jl")
 include("library/mod2linsolve.jl")
 include("library/relaxedgcd.jl")
 include("library/sortedmerge.jl")
@@ -25,6 +26,7 @@ include("library/function/abstract.jl")
 include("library/function/function.jl")
 include("library/function/operators.jl")
 include("library/function/setdict/setdict.jl")
+include("library/function/default.jl")
 
 include("library/quadratization/abstract.jl")
 include("library/quadratization/ntr_kzfd.jl")

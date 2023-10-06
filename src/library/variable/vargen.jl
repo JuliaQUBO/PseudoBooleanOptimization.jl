@@ -1,41 +1,36 @@
-function auxgen(::AbstractPBF{Symbol,T}; name::Symbol = :aux) where {T}
-    counter = Ref{Int}(0)
+struct VariableGenerator{V}
+    counter::Ref{Int}
+    step::Int
 
-    function aux(n::Union{Integer,Nothing} = nothing)
-        if isnothing(n)
-            return first(aux(1))
-        else
-            return [Symbol("$(name)_$(counter[] += 1)") for _ in 1:n]
-        end
+    function VariableGenerator{V}(start::Integer, step::Integer) where {V}
+        return new{V}(Ref(start), step)
     end
-
-    return aux
 end
 
-function auxgen(::AbstractPBF{V,T}; name::AbstractString = "aux") where {V<:AbstractString,T}
-    counter = Ref{Int}(0)
-
-    function aux(n::Union{Integer,Nothing} = nothing)
-        if isnothing(n)
-            return first(aux(1))
-        else
-            return ["$(name)_$(counter[] += 1)" for _ in 1:n]
-        end
-    end
-
-    return aux
+function VariableGenerator(::Type{V}; start::Integer = 1, step::Integer = 1) where {V}
+    return VariableGenerator{V}(start, step)
 end
 
-function auxgen(::AbstractPBF{V,T}; start::V = V(0), step::V = V(-1)) where {V<:Integer,T}
-    counter = [start]
+function __next(vg::VariableGenerator{V}) where {V}
+    i = vg.counter[]
 
-    function aux(n::Union{Integer,Nothing} = nothing)
+    vg.counter[] += vg.step
+
+    return varmap(V, i)
+end
+
+function vargen(::Type{V}; start::Integer = 1, step::Integer = 1) where {V}
+    vg = VariableGenerator{V}(start, step)
+
+    return (n::Union{Integer,Nothing} = nothing) -> begin
         if isnothing(n)
-            return first(aux(1))
+            return __next(vg)::V
         else
-            return [(counter[] += step) for _ in 1:n]
+            return [__next(vg) for _ = 1:n]::Vector{V}
         end
     end
+end
 
-    return aux
+function vargen(::AbstractPBF{V}; start::Integer = 1, step::Integer = 1) where {V}
+    return vargen(V; start, step)
 end
