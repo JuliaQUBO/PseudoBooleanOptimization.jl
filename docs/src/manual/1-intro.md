@@ -1,0 +1,3 @@
+# PseudoBooleanOptimization.jl Manual
+
+## Introduction

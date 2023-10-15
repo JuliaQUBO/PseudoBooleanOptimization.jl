@@ -15,7 +15,7 @@ const __VERSION__ = VersionNumber(
 )
 
 # Interface Definition
-include("interface/variable.jl")
+include("interface/variables.jl")
 include("interface/function.jl")
 include("interface/quadratization.jl")
 

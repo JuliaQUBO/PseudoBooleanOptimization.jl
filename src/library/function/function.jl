@@ -1,18 +1,16 @@
 @doc raw"""
-    PseudoBooleanFunction{V,T,S}
+    PBF{V,T,S}
 
 This is a concrete implementation of [`AbstractPBF`](@ref) that uses the `S` data structure to store the terms of the function.
 """
-struct PseudoBooleanFunction{V,T,S} <: AbstractPBF{V,T}
+struct PBF{V,T,S} <: AbstractPBF{V,T}
     Φ::S
 
     # Constructor: I know what I am doing
-    function PseudoBooleanFunction{V,T,S}(Φ::S) where {V,T,S}
+    function PBF{V,T,S}(Φ::S) where {V,T,S}
         return new{V,T,S}(Φ)
     end
 end
-
-const PBF{V,T,S} = PseudoBooleanFunction{V,T,S}
 
 # Internal representation
 function data(f::PBF{V,T,S})::S where {V,T,S}

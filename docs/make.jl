@@ -11,10 +11,11 @@ DocMeta.setdocmeta!(
 )
 
 makedocs(;
-    modules = [PseudoBooleanOptimization],
-    doctest = true,
-    clean   = true,
-    format  = Documenter.HTML(
+    modules  = [PseudoBooleanOptimization],
+    doctest  = true,
+    clean    = true,
+    warnonly = [:missing_docs],
+    format   = Documenter.HTML(
         assets           = ["assets/extra_styles.css", "assets/favicon.ico"],
         mathengine       = Documenter.KaTeX(),
         sidebar_sitename = false,
@@ -23,6 +24,13 @@ makedocs(;
     authors  = "Pedro Maciel Xavier",
     pages    = [ # 
         "Home"          => "index.md",
+        "Manual"        => [
+            "manual/1-intro.md",
+            "manual/2-function.md",
+            "manual/3-operators.md",
+            "manual/4-quadratization.md",
+            "manual/5-synthesis.md",
+        ],
         "API Reference" => "api.md",
     ],
     workdir  = @__DIR__

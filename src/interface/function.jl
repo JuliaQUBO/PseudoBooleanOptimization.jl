@@ -1,5 +1,5 @@
 @doc raw"""
-    AbstractPseudoBooleanFunction{V,T}
+    AbstractPBF{V,T}
 
 A pseudo-Boolean Function[^Boros2002] ``f \in \mathscr{F}`` over some field ``\mathbb{T}`` takes the form
 
@@ -15,9 +15,9 @@ Variables ``x_j`` are boolean, thus ``f : \mathbb{B}^{n} \to \mathbb{T}``.
 [^Boros2002]:
     Endre Boros, Peter L. Hammer, **Pseudo-Boolean optimization**, *Discrete Applied Mathematics*, 2002 [{doi}](https://doi.org/10.1016/S0166-218X(01)00341-9)
 """
-abstract type AbstractFunction{V,T} end
+abstract type AbstractPBF{V,T} end
 
-const AbstractPBF{V,T} = AbstractFunction{V,T}
+const AbstractFunction{V,T} = AbstractPBF{V,T}
 
 @doc raw"""
     data(f::AbstractPBF{V,T})

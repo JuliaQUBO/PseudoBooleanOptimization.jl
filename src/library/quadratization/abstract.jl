@@ -44,11 +44,6 @@ end
 """
 struct INFER <: QuadratizationMethod end
 
-@doc raw"""
-    infer_quadratization(f::AbstractPBF)
-
-For a given PBF, returns whether it should be quadratized or not, based on its degree.
-"""
 function infer_quadratization(f::AbstractPBF, stable::Bool = false)
     k = degree(f)
 

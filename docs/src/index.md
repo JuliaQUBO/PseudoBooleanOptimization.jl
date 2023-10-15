@@ -18,3 +18,15 @@ f = PBO.PBF{Symbol,Float64}(
 
 g = f^2 - 2f
 ```
+
+## Table of Contents
+
+```@contents
+Pages = [
+    "manual/1-intro.md",
+    "manual/2-function.md",
+    "manual/3-operators.md",
+    "manual/4-quadratization.md",
+]
+Depth = 2
+```
