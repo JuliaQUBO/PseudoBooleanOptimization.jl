@@ -1,9 +1,18 @@
 module PseudoBooleanOptimization
 
+const PBO = PseudoBooleanOptimization
+
 using Random
 using LinearAlgebra
 using MutableArithmetics
 const MA = MutableArithmetics
+
+# Versioning
+using TOML
+const __PROJECT__ = abspath(dirname(pathof(PBO)), "..")
+const __VERSION__ = VersionNumber(
+    getindex(TOML.parsefile(joinpath(__PROJECT__, "Project.toml")), "version"),
+)
 
 # Interface Definition
 include("interface/variable.jl")
@@ -16,11 +25,11 @@ include("library/mod2linsolve.jl")
 include("library/relaxedgcd.jl")
 include("library/sortedmerge.jl")
 
-include("library/variable/varlt.jl")
-include("library/variable/vargen.jl")
-include("library/variable/varmap.jl")
-include("library/variable/varmul.jl")
-include("library/variable/varshow.jl")
+include("library/variables/varlt.jl")
+include("library/variables/vargen.jl")
+include("library/variables/varmap.jl")
+include("library/variables/varmul.jl")
+include("library/variables/varshow.jl")
 
 include("library/function/abstract.jl")
 include("library/function/function.jl")

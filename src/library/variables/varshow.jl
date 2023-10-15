@@ -3,7 +3,7 @@ varshow(v::Integer, x::AbstractString = "x")          = "$(x)$(_subscript(v))"
 varshow(v::V) where {V<:Union{Symbol,AbstractString}} = string(v)
 
 function Base.show(io::IO, ::MIME"text/plain", f::AbstractPBF{V,T}) where {V,T}
-    if isscalar(f)
+    if isconstant(f)
         print(io, f[nothing])
 
         return nothing

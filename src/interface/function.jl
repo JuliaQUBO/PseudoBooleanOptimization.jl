@@ -15,14 +15,23 @@ Variables ``x_j`` are boolean, thus ``f : \mathbb{B}^{n} \to \mathbb{T}``.
 [^Boros2002]:
     Endre Boros, Peter L. Hammer, **Pseudo-Boolean optimization**, *Discrete Applied Mathematics*, 2002 [{doi}](https://doi.org/10.1016/S0166-218X(01)00341-9)
 """
-abstract type AbstractPseudoBooleanFunction{V,T} end
+abstract type AbstractFunction{V,T} end
 
-const AbstractPBF{V,T} = AbstractPseudoBooleanFunction{V,T}
+const AbstractPBF{V,T} = AbstractFunction{V,T}
 
 @doc raw"""
-    isscalar(f::AbstractPBF)::Bool
+    data(f::AbstractPBF{V,T})
+
+Returns the internal representation of ``f \in \mathscr{F}``.
 """
-function isscalar end
+function data end
+
+@doc raw"""
+    isconstant(f::AbstractPBF)::Bool
+
+Check if the given Pseudo-Boolean function `f` is a constant, i.e., if it has no variables.
+"""
+function isconstant end
 
 @doc raw"""
     term

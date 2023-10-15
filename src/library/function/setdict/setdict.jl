@@ -140,7 +140,7 @@ function Base.delete!(f::F, ω...) where {V,T,F<:SetDictPBF{V,T}}
 end
 
 
-function isscalar(f::SetDictPBF{V,T}) where {V,T}
+function isconstant(f::SetDictPBF{V,T}) where {V,T}
     return isempty(f) || (length(f) == 1 && haskey(f, nothing))
 end
 
@@ -149,5 +149,5 @@ function Base.iszero(f::SetDictPBF{V,T}) where {V,T}
 end
 
 function Base.isone(f::SetDictPBF{V,T}) where {V,T}
-    return isscalar(f) && isone(f[nothing])
+    return isconstant(f) && isone(f[nothing])
 end

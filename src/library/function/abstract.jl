@@ -61,7 +61,7 @@ function upperbound(f::F) where {V,T,F<:AbstractPBF{V,T}}
 end
 
 function Base.convert(::Type{U}, f::AbstractPBF{V,T}) where {V,T,U<:Number}
-    if isscalar(f)
+    if isconstant(f)
         return convert(U, f[nothing])
     else
         error("Can't convert non-scalar pseudo-Boolean function to scalar type '$U'")

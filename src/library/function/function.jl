@@ -14,6 +14,11 @@ end
 
 const PBF{V,T,S} = PseudoBooleanFunction{V,T,S}
 
+# Internal representation
+function data(f::PBF{V,T,S})::S where {V,T,S}
+    return f.Φ
+end
+
 # Type promotion
 function Base.promote_rule(::Type{PBF{V,Tf,S}}, ::Type{PBF{V,Tg,S}}) where {V,Tf,Tg,S}
     T = promote_type(Tf, Tg)
