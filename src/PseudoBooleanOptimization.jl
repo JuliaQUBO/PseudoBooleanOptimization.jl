@@ -1,28 +1,50 @@
 module PseudoBooleanOptimization
 
+const PBO = PseudoBooleanOptimization
+
 using Random
 using LinearAlgebra
 using MutableArithmetics
 const MA = MutableArithmetics
 
-include("library.jl")
-include("interface.jl")
+# Versioning
+using TOML
+const __PROJECT__ = abspath(dirname(pathof(PBO)), "..")
+const __VERSION__ = VersionNumber(
+    getindex(TOML.parsefile(joinpath(__PROJECT__, "Project.toml")), "version"),
+)
 
-include("function/abstract.jl")
-include("function/term.jl")
-include("function/dict/function.jl")
-# include("function/vector/function.jl")
+# Interface Definition
+include("interface/variables.jl")
+include("interface/function.jl")
+include("interface/quadratization.jl")
 
-# This selects the implementation onwards
-const PBF{V,T} = DictFunction{V,T}
+# Utility Functions
+include("library/subscript.jl")
+include("library/mod2linsolve.jl")
+include("library/relaxedgcd.jl")
+include("library/sortedmerge.jl")
 
-include("print.jl")
-include("quadratization.jl")
+include("library/variables/varlt.jl")
+include("library/variables/vargen.jl")
+include("library/variables/varmap.jl")
+include("library/variables/varmul.jl")
+include("library/variables/varshow.jl")
+
+include("library/function/abstract.jl")
+include("library/function/function.jl")
+include("library/function/operators.jl")
+include("library/function/setdict/setdict.jl")
+include("library/function/default.jl")
+
+include("library/quadratization/abstract.jl")
+include("library/quadratization/ntr_kzfd.jl")
+include("library/quadratization/ptr_bg.jl")
 
 # Synthetic PBF generation
-include("synthesis/wishart.jl")
-include("synthesis/regular_xorsat.jl")
-include("synthesis/sherrington_kirkpatrick.jl")
-include("synthesis/not_all_equal_3sat.jl")
+include("library/synthesis/wishart.jl")
+include("library/synthesis/regular_xorsat.jl")
+include("library/synthesis/sherrington_kirkpatrick.jl")
+include("library/synthesis/not_all_equal_3sat.jl")
 
 end # module PseudoBooleanOptimization

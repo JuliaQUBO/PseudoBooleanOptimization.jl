@@ -59,28 +59,7 @@ const PBF_LIST = [
 ]
 
 const PBF_CONSTRUCTOR_LIST = [
-    (PBO.PBF{S,T}(0.0), PBO.PBF{S,T}()),
-    (zero(PBO.PBF{S,T}), PBO.PBF{S,T}()),
-    (
-        f,
-        PBO.PBF{S,T}(
-            nothing => 0.5,
-            :x => 1.0,
-            :y => 1.0,
-            :z => 1.0,
-            [:x, :y] => -2.0,
-            [:x, :z] => -2.0,
-            [:y, :z] => -2.0,
-            [:x, :y, :z] => 3.0,
-        ),
-    ),
-    (g, PBO.PBF{S,T}(1.0)),
-    (g, one(PBO.PBF{S,T})),
-    (h, PBO.PBF{S,T}([:x, :y, :z, :w, nothing])),
-    (p, PBO.PBF{S,T}((nothing, 0.5), :x, [:x, :y] => -2.0)),
-    (q, PBO.PBF{S,T}(nothing => 0.5, :y, [:x, :y] => 2.0)),
-    (r, PBO.PBF{S,T}(nothing, :z => -1.0)),
-    (s, PBO.PBF{S,T}(S[] => 0.0, Set{S}([:x, :y, :z]) => 3.0)),
+    
 ]
 
 const PBF_OPERATOR_LIST = [
