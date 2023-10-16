@@ -16,15 +16,15 @@ function benchmark_add!(suite, ::Type{F}) where {V,T,F<:PBO.AbstractFunction{V,T
     suite["operators"]["+"]["small"] = @benchmarkable(
         f + g;
         setup = begin
-            f = PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 10)
-            g = PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 10)
+            f = erste(PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 10))
+            g = erste(PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 10))
         end
     )
     suite["operators"]["+"]["large"] = @benchmarkable(
         f + g;
         setup = begin
-            f = PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 100)
-            g = PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 100)
+            f = erste(PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 100))
+            g = erste(PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 100))
         end
     )
 
@@ -36,15 +36,15 @@ function benchmark_sub!(suite, ::Type{F}) where {V,T,F<:PBO.AbstractFunction{V,T
     suite["operators"]["-"]["small"] = @benchmarkable(
         f - g;
         setup = begin
-            f = PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 10)
-            g = PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 10)
+            f = erste(PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 10))
+            g = erste(PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 10))
         end
     )
     suite["operators"]["-"]["large"] = @benchmarkable(
         f - g;
         setup = begin
-            f = PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 100)
-            g = PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 100)
+            f = erste(PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 100))
+            g = erste(PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 100))
         end
     )
 
@@ -56,15 +56,15 @@ function benchmark_mul!(suite, ::Type{F}) where {V,T,F<:PBO.AbstractFunction{V,T
     suite["operators"]["*"]["small"] = @benchmarkable(
         f * g;
         setup = begin
-            f = PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 10)
-            g = PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 10)
+            f = erste(PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 10))
+            g = erste(PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 10))
         end
     )
     suite["operators"]["*"]["large"] = @benchmarkable(
         f * g;
         setup = begin
-            f = PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 32)
-            g = PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 32)
+            f = erste(PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 32))
+            g = erste(PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 32))
         end
     )
 
@@ -76,15 +76,15 @@ function benchmark_dict_evaluation!(suite, ::Type{F}) where {V,T,F<:PBO.Abstract
     suite["operators"]["dict-evaluation"]["small"] = @benchmarkable(
         f(x);
         setup = begin
-            f = PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 10)
-            x = Dict{Int,Int}(i => rand((0, 1)) for i = 1:10)
+            f = erste(PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 10))
+            x = erste(Dict{Int,Int}(i => rand((0, 1)) for i = 1:10))
         end
     )
     suite["operators"]["dict-evaluation"]["large"] = @benchmarkable(
         f(x);
         setup = begin
-            f = PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 100)
-            x = Dict{Int,Int}(i => rand((0, 1)) for i = 1:100)
+            f = erste(PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 100))
+            x = erste(Dict{Int,Int}(i => rand((0, 1)) for i = 1:100))
         end
     )
 
@@ -96,15 +96,15 @@ function benchmark_set_evaluation!(suite, ::Type{F}) where {V,T,F<:PBO.AbstractF
     suite["operators"]["set-evaluation"]["small"] = @benchmarkable(
         f(x);
         setup = begin
-            f = PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 10)
-            x = Set{Int}(i for i = 1:10 if rand(Bool))
+            f = erste(PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 10))
+            x = erste(Set{Int}(i for i = 1:10 if rand(Bool)))
         end
     )
     suite["operators"]["set-evaluation"]["large"] = @benchmarkable(
         f(x);
         setup = begin
-            f = PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 100)
-            x = Set{Int}(i for i = 1:100 if rand(Bool))
+            f = erste(PBO.sherrington_kirkpatrick(Random.GLOBAL_RNG, $F, 100))
+            x = erste(Set{Int}(i for i = 1:100 if rand(Bool)))
         end
     )
 

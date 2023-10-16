@@ -15,6 +15,8 @@ const PBO = PseudoBooleanOptimization
 
 Random.seed!(0)
 
+erste(f) = f isa Tuple ? first(f) : f
+
 const SUITE = BenchmarkGroup()
 
 include("suites/constructors.jl")
