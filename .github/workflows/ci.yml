@@ -26,8 +26,6 @@ jobs:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
       - uses: julia-actions/julia-buildpkg@v1
-      - name: Enable Integration Tests
-        run: echo "export PBO_INTEGRATION_TESTS=true" >> $GITHUB_ENV
       - uses: julia-actions/julia-runtest@v1
       - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v2
