@@ -3,11 +3,11 @@ function varmul(u::Set{V}, v::Set{V}) where {V}
 end
 
 function varmul(u::V, v::Set{V}) where {V}
-    return u ∪ v
+    return push!(copy(u), v)
 end
 
 function varmul(u::Set{V}, v::V) where {V}
-    return u ∪ v
+    return push!(copy(u), v)
 end
 
 function varmul(u::V, v::V) where {V}

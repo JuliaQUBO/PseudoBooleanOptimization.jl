@@ -24,11 +24,31 @@ function Base.promote_rule(::Type{PBF{V,Tf,S}}, ::Type{PBF{V,Tg,S}}) where {V,Tf
     return PBF{V,T,S}
 end
 
-# Constructors
-function PBF{V,T,S}(items) where {V,T,S}
-    @assert Base.haslength(items)
+# Constructors - Base case
+function PBF{V,T,S}() where {V,T,S}
+    return zero(PBF{V,T,S})
+end
 
-    f = sizehint!(zero(PBF{V,T,S}), length(items))
+# Constructors - Induction
+function PBF{V,T,S}(args...) where {V,T,S}
+    return PBF{V,T,S}(collect(args))
+end
+
+# Constructors - Generator
+function PBF{V,T,S}(items::G) where {V,T,S,G<:Iterators.Generator}
+    return PBF{V,T,S}(collect(items))
+end
+
+# Constructors - Dict
+# function PBF{V,T,S}(items::AbstractDict) where {V,T,S}
+#     return PBF{V,T,S}(collect(items))
+# end
+
+# Constructors - Item list
+function PBF{V,T,S}(items::AbstractVector) where {V,T,S}
+    f = zero(PBF{V,T,S})
+
+    Base.haslength(items) && sizehint!(f, length(items))
 
     for x in items
         ω, c = term(PBF{V,T,S}, x)
@@ -37,8 +57,4 @@ function PBF{V,T,S}(items) where {V,T,S}
     end
 
     return f
-end
-
-function PBF{V,T,S}(args...) where {V,T,S}
-    return PBF{V,T,S}(args)
 end

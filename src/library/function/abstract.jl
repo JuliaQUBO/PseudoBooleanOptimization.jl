@@ -67,3 +67,39 @@ function Base.convert(::Type{U}, f::AbstractPBF{V,T}) where {V,T,U<:Number}
         error("Can't convert non-scalar pseudo-Boolean function to scalar type '$U'")
     end
 end
+
+function Base.show(io::IO, ::MIME"text/plain", f::AbstractPBF{V,T}) where {V,T}
+    if isconstant(f)
+        print(io, f[nothing])
+
+        return nothing
+    end
+
+    terms = sort!(map(((ω, c)::Pair) -> (sort!(collect(ω)) => c), pairs(f)); by=first, lt=varlt)
+
+    for (i, (ω, c)) in enumerate(terms)
+        if i > 1
+            if c < zero(T)
+                print(io, " - ")
+            else
+                print(io, " + ")
+            end
+        else # i == 1
+            if c < zero(T)
+                print(io, "-")
+            end
+        end
+
+        c_ = abs(c)
+
+        if isempty(ω)
+            print(io, c_)
+        elseif isone(c_)
+            join(io, varshow.(ω), " ")
+        else
+            join(io, [string(c_); varshow.(ω)], " ")
+        end
+    end
+
+    return nothing
+end

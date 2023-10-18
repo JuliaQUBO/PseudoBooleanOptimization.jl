@@ -4,5 +4,9 @@ function varmap(::Type{V}, i::Integer) where {V}
 end
 
 function varmap(::Type{V}, i::Integer) where {V<:Union{AbstractString,Symbol}}
-    return V("x$(_subscript(i))")
+    if i >= 0
+        return V("var_$(i)")
+    else
+        return V("aux_$(-i)")
+    end
 end
