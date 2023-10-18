@@ -7,6 +7,8 @@ function integration_tests()
 end
 
 function test_dependant(pkg_name::AbstractString, dep_path::AbstractString = PBO.__PROJECT__; kws...)
+    @info "Integration Tests: $pkg_name"
+
     Pkg.activate(; temp = true)
 
     Pkg.develop(; path = dep_path)

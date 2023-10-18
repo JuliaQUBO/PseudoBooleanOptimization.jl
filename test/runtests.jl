@@ -13,11 +13,17 @@ include("unit/unit.jl")
 # Integration tests
 include("integration/integration.jl")
 
-function main(; run_itegration_tests::Bool = get_bool_env("PBO_INTEGRATION_TESTS", false))
+function run_integration_tests()::Bool
+    return "--run-integration-tests" ∈ ARGS || get_bool_env("PBO_INTEGRATION_TESTS", false)
+end
+
+function main(; run_itegration_tests::Bool = run_integration_tests())
     @testset "♠ PseudoBooleanOptimization.jl $(PBO.__VERSION__) Test Suite ♠" verbose = true begin
         unit_tests()
 
         if run_itegration_tests
+            @info "Running Integration Tests"
+
             integration_tests()
         end
     end
