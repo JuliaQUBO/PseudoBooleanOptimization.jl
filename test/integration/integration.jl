@@ -6,7 +6,9 @@ function integration_tests()
     return nothing
 end
 
-function test_dependant(pkg_name::AbstractString, dep_path::AbstractString = PBO.__PROJECT__)
+function test_dependant(pkg_name::AbstractString, dep_path::AbstractString = PBO.__PROJECT__; kws...)
+    @info "Integration Tests: $pkg_name"
+
     Pkg.activate(; temp = true)
 
     Pkg.develop(; path = dep_path)
@@ -15,9 +17,13 @@ function test_dependant(pkg_name::AbstractString, dep_path::AbstractString = PBO
     Pkg.status()
     
     try
-        Pkg.test(pkg_name)
+        Pkg.test(pkg_name; kws...)
     catch e
-        return false
+        if e isa PkgError
+            return false
+        else
+            rethrow(e)
+        end
     end
 
     return true

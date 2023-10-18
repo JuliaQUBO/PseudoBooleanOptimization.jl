@@ -73,6 +73,7 @@ function test_setdict_operators()
 
             @testset "^" begin
                 let f = F(:x => 1.0, (:x, :y) => -2.0, 0.5)
+                    @test f^0 == one(f)
                     @test f^1 == f
                     @test f^2 == f * f == F(
                         :x => 2.0,
