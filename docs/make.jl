@@ -40,7 +40,7 @@ if "--skip-deploy" ∈ ARGS
     @warn "Skipping deployment"
 else
     deploydocs(
-        repo = raw"github.com/pedromxavier/PseudoBooleanOptimization.jl.git",
+        repo = raw"github.com/psrenergy/PseudoBooleanOptimization.jl.git",
         push_preview = true,
     )
 end
