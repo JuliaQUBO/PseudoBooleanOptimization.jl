@@ -8,7 +8,7 @@
 
 [![codecov](https://codecov.io/gh/psrenergy/PseudoBooleanOptimization.jl/graph/badge.svg?token=87V5MR99ET)](https://codecov.io/gh/psrenergy/PseudoBooleanOptimization.jl)
 [![CI](https://github.com/psrenergy/PseudoBooleanOptimization.jl/actions/workflows/ci.yml/badge.svg?branch=main)](/actions/workflows/ci.yml)
-[![Docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://psrenergy.github.com/PseudoBooleanOptimization.jl/dev)
+[![Docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://psrenergy.github.io/PseudoBooleanOptimization.jl/dev)
 
 </div>
 
