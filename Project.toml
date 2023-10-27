@@ -1,7 +1,7 @@
 name = "PseudoBooleanOptimization"
 uuid = "c8fa9a04-bc42-452d-8558-dc51757be744"
 authors = ["pedromxavier <pedrox@cos.ufrj.br>"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"

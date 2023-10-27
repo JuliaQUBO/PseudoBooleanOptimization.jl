@@ -75,7 +75,7 @@ function Base.show(io::IO, ::MIME"text/plain", f::AbstractPBF{V,T}) where {V,T}
         return nothing
     end
 
-    terms = sort!(map(((ω, c)::Pair) -> (sort!(collect(ω)) => c), pairs(f)); by=first, lt=varlt)
+    terms = sort!(map(((ω, c)::Pair) -> (sort!(collect(ω); alg=InsertionSort, lt=varlt) => c), pairs(f)); by=first, lt=varlt)
 
     for (i, (ω, c)) in enumerate(terms)
         if i > 1
