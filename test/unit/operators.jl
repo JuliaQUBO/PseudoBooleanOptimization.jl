@@ -1,16 +1,16 @@
 function test_operators()
     @testset "Operators" verbose = true begin
-        test_setdict_operators()
+        test_TermDict_operators()
     end
 
     return nothing
 end
 
-function test_setdict_operators()
-    @testset "∴ SetDict" begin
+function test_TermDict_operators()
+    @testset "∴ TermDict" begin
         let S = Symbol
             T = Float64
-            F = PBO.SetDictPBF{S,T}
+            F = PBO.TermDictPBF{S,T}
 
             @testset "+" begin
                 let a = -1.0

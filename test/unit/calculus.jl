@@ -1,8 +1,8 @@
 function test_calculus()
     @testset "⊛ Calculus" verbose = true begin
-        @testset "∴ SetDict" begin
+        @testset "∴ TermDict" begin
             @testset "→ Derivatives" begin
-                let V = Symbol, T = Float64, F = PBO.SetDictPBF{V,T}
+                let V = Symbol, T = Float64, F = PBO.TermDictPBF{V,T}
                     f = F(
                         -1.0,
                         :x => 2.0,

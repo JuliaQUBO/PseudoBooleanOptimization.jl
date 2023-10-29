@@ -1,7 +1,7 @@
 function test_print()
     @testset "⊛ Print" verbose = true begin
-        @testset "∴ SetDict/Integer" begin
-            let V = Int, T = Float64, F = PBO.SetDictPBF{V,T}
+        @testset "∴ TermDict/Integer" begin
+            let V = Int, T = Float64, F = PBO.TermDictPBF{V,T}
                 @test repr(MIME"text/plain"(), F(0)) == "x₀"
                 @test repr(MIME"text/plain"(), F(0.0)) == "0.0"
                 @test repr(MIME"text/plain"(), F(1.0)) == "1.0"
@@ -11,8 +11,8 @@ function test_print()
             end
         end
 
-        @testset "∴ SetDict/Symbol" begin
-            let V = Symbol, T = Float64, F = PBO.SetDictPBF{V,T}
+        @testset "∴ TermDict/Symbol" begin
+            let V = Symbol, T = Float64, F = PBO.TermDictPBF{V,T}
                 @test repr(MIME"text/plain"(), F(:x)) == "x"
                 @test repr(MIME"text/plain"(), F(0.0)) == "0.0"
                 @test repr(MIME"text/plain"(), F(1.0)) == "1.0"

@@ -1,46 +1,51 @@
 @doc raw"""
-    Quadratization{PTR_BG}(stable::Bool = false)
+    Quadratization(::PTR_BG; stable::Bool = false)
 
-Positive term reduction PTR-BG (Boros & Gruber, 2014)
+## Positive term reduction PTR-BG[^PTR_BG]
 
 Let ``f(\mathbf{x}) = x_{1} x_{2} \dots x_{k}``.
 
 ```math
-\mathcal{Q}\left\lbrace{f}\right\rbrace(\mathbf{x}; \mathbf{z}) = \left[{
+\mathcal{Q}\left\lbrace{f}\right\rbrace(\mathbf{x}; \mathbf{w}) = \left[{
     \sum_{i = 1}^{k-2} z_{i} \left({ k - i - 1 + x_{i} - \sum_{j = i+1}^{k} x_{j} }\right)
 }\right] + x_{k-1} x_{k}
 ```
-where ``\mathbf{x} \in \mathbb{B}^k`` and ``\mathbf{z} \in \mathbb{B}^{k-2}``
 
-!!! info
-    Introduces ``k - 2`` new variables ``z_{1}, \dots, z_{k-2}`` and ``k - 1`` non-submodular terms.
+where ``\mathbf{x} \in \mathbb{B}^k`` and ``\mathbf{w} \in \mathbb{B}^{k-2}``
+
+### Properties
+
+| Variables | Non-submodular Terms |
+|:---------:|:--------------------:|
+|   k - 2   |        k - 1         |
+
+[PTR_BG]:
+    Boros & Gruber, 2014
 """
 struct PTR_BG <: QuadratizationMethod end
 
 function quadratize!(
     aux,
     f::F,
-    ω::Any,
+    ω::AbstractTerm{V},
     c::T,
-    quad::Quadratization{PTR_BG},
+    ::Quadratization{PTR_BG},
 ) where {V,T,F<:AbstractPBF{V,T}}
-    ω_ = term_head(F, ω)
-
     # Degree
-    k = length(ω_)
+    k = length(ω)
 
     # Fast-track
-    k < 3 && return nothing
+    k < 3 && return f
 
     # Variables
     s = aux(k - 2)::Vector{V}
-    b = collect(ω_)::Vector{V}
+    b = collect(ω)::Vector{V}
 
     # Stabilization
-    quad.stable && sort!(b; lt = varlt)
+    # Since the variables are sorted by default, this method is naturally stable
 
     # Quadratization
-    delete!(f, ω_)
+    delete!(f, ω)
 
     f[b[k]×b[k-1]] += c
 

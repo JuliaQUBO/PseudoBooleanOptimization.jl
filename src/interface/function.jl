@@ -1,4 +1,9 @@
 @doc raw"""
+    AbstractTerm{V}
+"""
+abstract type AbstractTerm{V} end
+
+@doc raw"""
     AbstractPBF{V,T}
 
 A pseudo-Boolean Function[^Boros2002] ``f \in \mathscr{F}`` over some field ``\mathbb{T}`` takes the form

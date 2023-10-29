@@ -1,4 +1,4 @@
-const DefaultPBF{V,T} = PBF{V,T,SetDict{V,T}}
+const DefaultPBF{V,T} = PBF{V,T,TermDict{V,T}}
 
 function PBF{V,T}(args...; kwargs...) where {V,T}
     return DefaultPBF{V,T}(args...; kwargs...)

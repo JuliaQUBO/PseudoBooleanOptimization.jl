@@ -1,50 +1,60 @@
 @doc raw"""
-    Quadratization{NTR_KZFD}(stable::Bool = false)
+    Quadratization(::NTR_KZFD; stable::Bool = false)
 
-Negative term reduction NTR-KZFD (Kolmogorov & Zabih, 2004; Freedman & Drineas, 2005)
+## Negative term reduction NTR-KZFD[^NTR_KZFD]
 
 Let ``f(\mathbf{x}) = -x_{1} x_{2} \dots x_{k}``.
 
 ```math
-\mathcal{Q}\left\lbrace{f}\right\rbrace(\mathbf{x}; z) = (k - 1) z - \sum_{i = 1}^{k} x_{i} z
+\mathcal{Q}\left\lbrace{f}\right\rbrace(\mathbf{x}; w) = (k - 1) w - \sum_{i = 1}^{k} x_{i} w
 ```
 
-where ``\mathbf{x} \in \mathbb{B}^k``
+where ``\mathbf{x} \in \mathbb{B}^k, w \in \mathbb{B}``.
+
+### Properties
+
+| Variables | Non-submodular Terms |
+|:---------:|:--------------------:|
+|     1     |          0           |
 
 !!! info
-    Introduces a new variable ``z`` and no non-submodular terms.
+    NTR-KZFD is only applicable to negative terms.
+
+!!! info
+    This method is stable by construction.
+
+[^NTR_KZFD]:
+    Kolmogorov & Zabih, 2004; Freedman & Drineas, 2005
 """
 struct NTR_KZFD <: QuadratizationMethod end
 
 function quadratize!(
     aux,
     f::F,
-    ω::Any,
+    ω::AbstractTerm{V},
     c::T,
     ::Quadratization{NTR_KZFD},
 ) where {V,T,F<:AbstractPBF{V,T}}
     @assert c < zero(T)
 
-    ω_ = term_head(F, ω)
-
     # Degree
-    k = length(ω_)
+    k = length(ω)
 
     # Fast-track
-    k < 3 && return nothing
+    k < 3 && return f
 
     # Variables
     s = aux()::V
 
     # Stabilization
-    # NOTE: This method is stable by construction
+    # This method is stable by construction
 
     # Quadratization
-    delete!(f, ω_)
+    delete!(f, ω)
 
     f[s] += -c * (k - 1)
 
-    for i ∈ ω_
+    for i ∈ ω
         f[i×s] += c
     end
 
