@@ -53,8 +53,12 @@ end
 
 const VI = VariableIndex
 
-function PBO.varlt(u::VariableIndex, v::VariableIndex)::Bool
+function PBO.varlt(u::VariableIndex, v::VariableIndex)
     return PBO.varlt(u.index, v.index)
+end
+
+function PBO.varshow(v::VariableIndex)
+    return PBO.varshow(v.index)
 end
 
 # Test foreign packages

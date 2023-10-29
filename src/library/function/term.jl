@@ -59,15 +59,15 @@ function varlt(u::Term{V}, v::Term{V}) where {V}
 end
 
 function varmul(u::Term{V}, v::Term{V}) where {V}
-    return Term{V}(sortedmergewith(u.ω, v.ω))
+    return Term{V}(sortedmergewith(u.ω, v.ω; lt = varlt))
 end
 
 function varmul(u::Term{V}, v::V) where {V}
-    return Term{V}(sortedmergewith(u.ω, V[v]))
+    return Term{V}(sortedmergewith(u.ω, V[v]; lt = varlt))
 end
 
 function varmul(u::V, v::Term{V}) where {V}
-    return Term{V}(sortedmergewith(V[u], v.ω))
+    return Term{V}(sortedmergewith(V[u], v.ω; lt = varlt))
 end
 
 function varmul(u::V, v::V) where {V}
