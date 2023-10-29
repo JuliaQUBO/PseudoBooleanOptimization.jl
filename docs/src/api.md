@@ -13,6 +13,8 @@ PBO.varshow
 ## Terms
 
 ```@docs
+PBO.AbstractTerm
+PBO.Term
 PBO.term
 PBO.term_head
 PBO.term_tail
@@ -65,10 +67,9 @@ PBO.infer_quadratization
 ```
 
 ```@docs
-PBO.INFER
-PBO.DEFAULT
 PBO.PTR_BG
 PBO.NTR_KZFD
+PBO.DEFAULT
 ```
 
 ## Synthesis

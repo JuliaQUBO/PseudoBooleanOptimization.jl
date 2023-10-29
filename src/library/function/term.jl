@@ -1,3 +1,8 @@
+@doc raw"""
+    Term{V}
+
+Reference implementation for [`AbstractTerm`](@ref).
+"""
 struct Term{V} <: AbstractTerm{V}
     ω::Vector{V}
 
