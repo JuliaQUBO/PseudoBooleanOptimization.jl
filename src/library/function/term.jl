@@ -78,6 +78,6 @@ function varmul(u::V, v::V) where {V}
     end
 end
 
-function varshow(io::IO, t::Term{V}) where {V}
-    return join(io, varshow.(t), " ")
+function varshow(t::Term{V}) where {V}
+    return join(varshow.(t), " ")
 end

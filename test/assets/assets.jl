@@ -45,3 +45,43 @@ function get_bool_env(key::String, default::Bool)::Union{Bool,Nothing}
         return nothing
     end
 end
+
+# This is a way to mock MathOptInterface's VariableIndex type
+struct VariableIndex
+    index::Int
+end
+
+const VI = VariableIndex
+
+function PBO.varlt(u::VariableIndex, v::VariableIndex)::Bool
+    return PBO.varlt(u.index, v.index)
+end
+
+# Test foreign packages
+function run_foreign_pkg_tests(pkg_name::AbstractString, dep_path::AbstractString = PBO.__PROJECT__; kws...)
+    @info "Running Tests for '$pkg_name'"
+
+    @testset "⋆ $pkg_name" begin
+        Pkg.activate(; temp = true)
+
+        Pkg.develop(; path = dep_path)
+
+        Pkg.add(pkg_name)
+
+        Pkg.status()
+        
+        @test try
+            Pkg.test(pkg_name; kws...)
+
+            true
+        catch e
+            if !(e isa PkgError)
+                rethrow(e)
+            end
+
+            false
+        end
+    end
+
+    return nothing
+end

@@ -1,37 +1,19 @@
-function integration_tests()
+include("interface.jl")
+
+function integration_tests(; _run_foreign_tests::Bool = false)
     @testset "□ Integration Tests" verbose = false begin
-        test_qubotools()
+        test_interface()
+        test_foreign(; _run_foreign_tests)
     end
 
     return nothing
 end
 
-function test_dependant(pkg_name::AbstractString, dep_path::AbstractString = PBO.__PROJECT__; kws...)
-    @info "Integration Tests: $pkg_name"
+function test_foreign(; _run_foreign_tests::Bool = false)
+    @testset "☉ Foreign packages" verbose = false begin
+        _run_foreign_tests || return nothing
 
-    Pkg.activate(; temp = true)
-
-    Pkg.develop(; path = dep_path)
-    Pkg.add(pkg_name)
-
-    Pkg.status()
-    
-    try
-        Pkg.test(pkg_name; kws...)
-    catch e
-        if e isa PkgError
-            return false
-        else
-            rethrow(e)
-        end
-    end
-
-    return true
-end
-
-function test_qubotools()
-    @testset "⋆ QUBOTools.jl" begin
-        @test test_dependant("QUBOTools")
+        run_foreign_pkg_tests("QUBOTools")
     end
 
     return nothing

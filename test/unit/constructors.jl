@@ -1,9 +1,20 @@
 function test_constructors()
     @testset "⊛ Constructors" verbose = true begin
+        test_term_constructors()
         test_termdict_constructors()
     end
 
     return nothing
+end
+
+function test_term_constructors()
+    @testset "∴ Term/Symbol" begin
+        @test PBO.Term([:x]) == PBO.Term{Symbol}([:x])
+        @test PBO.Term([:y]) == PBO.Term{Symbol}([:y])
+
+        @test PBO.Term([:x, :y]) == PBO.Term{Symbol}([:x, :y])
+        @test PBO.Term([:y, :x]) == PBO.Term{Symbol}([:x, :y])
+    end
 end
 
 function test_termdict_constructors()
