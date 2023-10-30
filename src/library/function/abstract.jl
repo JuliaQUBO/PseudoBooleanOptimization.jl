@@ -6,6 +6,36 @@ function Base.one(::F) where {V,T,F<:AbstractPBF{V,T}}
     return one(F)
 end
 
+function variables(f::AbstractPBF{V,T}) where {V,T}
+    x = Set{V}()
+
+    for ω in keys(f)
+        union!(x, ω)
+    end
+
+    return sort!(collect(x); lt = varlt)
+end
+
+function image(f::AbstractPBF{V,T}) where {V,T}
+    v = variables(f)
+    n = length(v)
+    u = Vector{Int}(undef, n)
+    x = Dict{V,Int}(vi => 0 for vi in v)
+    y = Vector{T}()
+
+    for i = 0:(2^n - 1)
+        digits!(u, i; base = 2)
+
+        for (vi, ui) in zip(v, u)
+            x[vi] = ui
+        end
+
+        push!(y, f(x))
+    end
+    
+    return unique!(sort!(y; lt = varlt))
+end
+
 function bounds(f::AbstractPBF)
     return (lowerbound(f), upperbound(f))
 end

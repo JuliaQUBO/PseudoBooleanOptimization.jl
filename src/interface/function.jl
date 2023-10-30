@@ -54,6 +54,20 @@ function term_head end
 function term_tail end
 
 @doc raw"""
+    variables(f::AbstractPBF)
+
+Returns an ordered vector of variables used by ``f \in \mathscr{F}``.
+"""
+function variables end
+
+@doc raw"""
+    image(f::AbstractPBF)
+
+Returns the image of ``f \in \mathscr{F}`` i. e. the set of values taken by ``f`` as a sorted vector.
+"""
+function image end
+
+@doc raw"""
     maxgap(f::AbstractPBF{V,T}) where {V,T}
 
 Computes the least upper bound for the greatest variantion possible of ``f \in \mathscr{F}`` i. e.
