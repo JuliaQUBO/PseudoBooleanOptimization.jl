@@ -17,7 +17,7 @@ end
 @doc raw"""
     infer_quadratization(f::AbstractPBF)
 
-For a given PBF, returns whether it should be quadratized or not, based on its degree.
+For a given PBF, returns whether it should be quadratized or not, based on its characteristics.
 """
 function infer_quadratization end
 

@@ -6,6 +6,8 @@ function varlt(u::V, v::V) where {V<:Signed}
     # 0, 1, 2, 3, ..., -1, -2, -3, ...
     if sign(u) == sign(v)
         return isless(abs(u), abs(v))
+    elseif sign(u) >= 0 && sign(v) >= 0
+        return isless(sign(u), sign(v))
     else
         return isless(sign(v), sign(u))
     end

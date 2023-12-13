@@ -11,9 +11,17 @@ function test_variable_system()
             end
 
             @testset "∴ Integer" begin
-                @test PBO.varlt(1, 1) === false
+                @test PBO.varlt(0, 1) === true
+                @test PBO.varlt(1, 0) === false
+                
+                @test PBO.varlt(0, -1) === true
+                @test PBO.varlt(-1, 0) === false
+
                 @test PBO.varlt(1, 2) === true
                 @test PBO.varlt(2, 1) === false
+
+                @test PBO.varlt(0, 0) === false
+                @test PBO.varlt(1, 1) === false
 
                 @test PBO.varlt(1, -1) === true
                 @test PBO.varlt(-1, 1) === false
