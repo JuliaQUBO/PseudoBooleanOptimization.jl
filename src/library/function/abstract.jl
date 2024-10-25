@@ -83,11 +83,11 @@ function mingap(f::F; tol::T = 1E-6) where {V,T,F<:AbstractPBF{V,T}}
 end
 
 function lowerbound(f::F) where {V,T,F<:AbstractPBF{V,T}}
-    return sum((c < zero(T) || isempty(ω)) ? c : zero(T) for (ω, c) in f)
+    return sum((c < zero(T) || isempty(ω)) ? c : zero(T) for (ω, c) in f; init = zero(T))
 end
 
 function upperbound(f::F) where {V,T,F<:AbstractPBF{V,T}}
-    return sum((c > zero(T) || isempty(ω)) ? c : zero(T) for (ω, c) in f)
+    return sum((c > zero(T) || isempty(ω)) ? c : zero(T) for (ω, c) in f; init = zero(T))
 end
 
 function Base.convert(::Type{U}, f::AbstractPBF{V,T}) where {V,T,U<:Number}
