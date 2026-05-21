@@ -7,6 +7,7 @@ include("bounds.jl")
 # include("discretization.jl")
 include("quadratization.jl")
 include("print.jl")
+include("ci.jl")
 
 function unit_tests()
     @testset "□ Unit Tests" verbose = true begin
@@ -19,6 +20,7 @@ function unit_tests()
         # test_discretization()
         test_quadratization()
         test_print()
+        test_ci_configuration()
     end
 
     return nothing
