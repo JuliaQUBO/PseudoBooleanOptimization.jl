@@ -1,5 +1,5 @@
 @doc raw"""
-    Quadratization(::NTR_KZFD; stable::Bool = false)
+    Quadratization(::NTR_KZFD; stable::Bool = false, sign::Integer = 1)
 
 ## Negative term reduction NTR-KZFD[^NTR_KZFD]
 
@@ -33,9 +33,9 @@ function quadratize!(
     f::F,
     ω::AbstractTerm{V},
     c::T,
-    ::Quadratization{NTR_KZFD},
+    quad::Quadratization{NTR_KZFD},
 ) where {V,T,F<:AbstractPBF{V,T}}
-    @assert c < zero(T)
+    @assert quad.sign * c < zero(T)
 
     # Degree
     k = length(ω)

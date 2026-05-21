@@ -120,6 +120,8 @@ end
 
 function test_DEFAULT()
     @testset "→ DEFAULT" begin
+        @test_throws ArgumentError PBO.Quadratization(PBO.DEFAULT(); sign = 0)
+
         @testset "∴ TermDict/Integer" begin
             let V = Int, T = Float64, F = PBO.TermDictPBF{V,T}
                 let f = F(
@@ -183,6 +185,53 @@ function test_DEFAULT()
                     q = PBO.quadratize(f, PBO.Quadratization(PBO.DEFAULT(); stable = true))
 
                     @test q == g
+                end
+            end
+        end
+
+        @testset "∴ TermDict/Symbol/Maximization" begin
+            let V = Symbol, T = Float64, F = PBO.TermDictPBF{V,T}
+                let f = F([:x, :y, :z] => 1.0)
+                    q = PBO.quadratize(
+                        f,
+                        PBO.Quadratization(PBO.DEFAULT(); stable = true, sign = -1),
+                    )
+
+                    @test q == F([
+                        :aux_1       => -2.0,
+                        (:x, :aux_1) => 1.0,
+                        (:y, :aux_1) => 1.0,
+                        (:z, :aux_1) => 1.0,
+                    ])
+
+                    for x in 0:1, y in 0:1, z in 0:1
+                        ξ = Dict(:x => x, :y => y, :z => z)
+                        @test maximum(
+                            convert(T, q(merge(ξ, Dict(:aux_1 => s)))) for s in 0:1
+                        ) == convert(T, f(ξ))
+                    end
+                end
+
+                let f = F([:x, :y, :z] => -1.0)
+                    q = PBO.quadratize(
+                        f,
+                        PBO.Quadratization(PBO.DEFAULT(); stable = true, sign = -1),
+                    )
+
+                    @test q == F([
+                        :aux_1       => -1.0,
+                        (:x, :aux_1) => -1.0,
+                        (:y, :aux_1) => 1.0,
+                        (:z, :aux_1) => 1.0,
+                        (:y, :z)     => -1.0,
+                    ])
+
+                    for x in 0:1, y in 0:1, z in 0:1
+                        ξ = Dict(:x => x, :y => y, :z => z)
+                        @test maximum(
+                            convert(T, q(merge(ξ, Dict(:aux_1 => s)))) for s in 0:1
+                        ) == convert(T, f(ξ))
+                    end
                 end
             end
         end

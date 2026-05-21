@@ -61,6 +61,7 @@ PBO.relaxedgcd
 ## Quadratization
 
 ```@docs
+PBO.Quadratization
 PBO.quadratize
 PBO.quadratize!
 PBO.infer_quadratization

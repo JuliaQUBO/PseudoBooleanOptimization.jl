@@ -1,5 +1,5 @@
 @doc raw"""
-    Quadratization(::PTR_BG; stable::Bool = false)
+    Quadratization(::PTR_BG; stable::Bool = false, sign::Integer = 1)
 
 ## Positive term reduction PTR-BG[^PTR_BG]
 
