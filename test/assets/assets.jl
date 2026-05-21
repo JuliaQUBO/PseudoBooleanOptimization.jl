@@ -70,12 +70,16 @@ function run_foreign_pkg_tests(pkg_name::AbstractString, dep_path::AbstractStrin
 
         Pkg.develop(; path = dep_path)
 
-        Pkg.add(pkg_name)
+        # Some foreign test suites, such as QUBOTools' Documenter tests, expect
+        # package sources to live in a Git checkout with remotes.
+        Pkg.develop(pkg_name)
 
         Pkg.status()
         
         @test try
-            Pkg.test(pkg_name; kws...)
+            withenv("JULIA_PKG_PRECOMPILE_AUTO" => "0") do
+                Pkg.test(pkg_name; kws...)
+            end
 
             true
         catch e

@@ -1,5 +1,5 @@
 @doc raw"""
-    Quadratization(::PTR_BG; stable::Bool = false)
+    Quadratization(::PTR_BG; stable::Bool = false, sign::Integer = 1)
 
 ## Positive term reduction PTR-BG[^PTR_BG]
 
@@ -29,8 +29,10 @@ function quadratize!(
     f::F,
     ω::AbstractTerm{V},
     c::T,
-    ::Quadratization{PTR_BG},
+    quad::Quadratization{PTR_BG},
 ) where {V,T,F<:AbstractPBF{V,T}}
+    @assert quad.sign * c > zero(T)
+
     # Degree
     k = length(ω)
 
