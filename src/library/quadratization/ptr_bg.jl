@@ -29,8 +29,10 @@ function quadratize!(
     f::F,
     ω::AbstractTerm{V},
     c::T,
-    ::Quadratization{PTR_BG},
+    quad::Quadratization{PTR_BG},
 ) where {V,T,F<:AbstractPBF{V,T}}
+    @assert quad.sign * c > zero(T)
+
     # Degree
     k = length(ω)
 

@@ -8,6 +8,8 @@ Configures a quadratization method.
 
 The `sign` keyword controls the objective sense used to choose and validate term
 reductions. Use `sign = 1` for minimization and `sign = -1` for maximization.
+Coefficients in the quadratized function remain in the original objective
+scale.
 """
 struct Quadratization{Q<:QuadratizationMethod}
     method::Q
@@ -46,6 +48,20 @@ function infer_quadratization end
     quadratize(aux, f::PBF{V, T}, ::Quadratization{Q}) where {V,T,Q}
 
 Quadratizes a given PBF, i.e., applies a mapping ``\mathcal{Q} : \mathscr{F}^{k} \to \mathscr{F}^{2}``, where ``\mathcal{Q}`` is the quadratization method.
+
+For `Quadratization(...; sign = 1)`, the returned function preserves
+minimization over auxiliary variables:
+
+```math
+\min_{\mathbf{y}} \mathcal{Q}\{f\}(\mathbf{x}, \mathbf{y}) = f(\mathbf{x}).
+```
+
+For `Quadratization(...; sign = -1)`, it preserves maximization over auxiliary
+variables:
+
+```math
+\max_{\mathbf{y}} \mathcal{Q}\{f\}(\mathbf{x}, \mathbf{y}) = f(\mathbf{x}).
+```
 
 ## Auxiliary variables
 The `aux` function is expected to produce auxiliary variables with the following signatures:

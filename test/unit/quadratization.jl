@@ -25,6 +25,25 @@ function test_NTR_KZFD()
                         (:w, :aux_1) => -2.0,
                     ])
                 end
+
+                let f = F([:x, :y, :z] => 1.0)
+                    q = PBO.quadratize(
+                        f,
+                        PBO.Quadratization(PBO.NTR_KZFD(); stable = true, sign = -1),
+                    )
+
+                    @test q == F([
+                        :aux_1       => -2.0,
+                        (:x, :aux_1) => 1.0,
+                        (:y, :aux_1) => 1.0,
+                        (:z, :aux_1) => 1.0,
+                    ])
+                end
+
+                @test_throws AssertionError PBO.quadratize(
+                    F([:x, :y, :z] => -1.0),
+                    PBO.Quadratization(PBO.NTR_KZFD(); stable = true, sign = -1),
+                )
             end
         end
     end
@@ -64,6 +83,26 @@ function test_PTR_BG()
                         (:y, :z) => 2.0,
                     ])
                 end
+
+                let f = F([:x, :y, :z] => -1.0)
+                    q = PBO.quadratize(
+                        f,
+                        PBO.Quadratization(PBO.PTR_BG(); stable = true, sign = -1),
+                    )
+
+                    @test q == F([
+                        :aux_1       => -1.0,
+                        (:x, :aux_1) => -1.0,
+                        (:y, :aux_1) => 1.0,
+                        (:z, :aux_1) => 1.0,
+                        (:y, :z)     => -1.0,
+                    ])
+                end
+
+                @test_throws AssertionError PBO.quadratize(
+                    F([:x, :y, :z] => 1.0),
+                    PBO.Quadratization(PBO.PTR_BG(); stable = true, sign = -1),
+                )
             end
 
             @testset "∴ TermDict/Integer" begin
