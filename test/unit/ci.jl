@@ -17,5 +17,21 @@ function test_ci_configuration()
         @test occursin("version: '$(compat_floor.match)'", docs_config)
     end
 
+    @testset "Repository metadata" begin
+        repo_root = normpath(joinpath(@__DIR__, "..", ".."))
+        project   = TOML.parsefile(joinpath(repo_root, "Project.toml"))
+        readme    = read(joinpath(repo_root, "README.md"), String)
+        docs_make = read(joinpath(repo_root, "docs", "make.jl"), String)
+        legacy_owner = "psr" * "energy"
+
+        @test !occursin(legacy_owner, readme)
+        @test !occursin(legacy_owner, docs_make)
+        @test occursin("https://codecov.io/gh/JuliaQUBO/PseudoBooleanOptimization.jl", readme)
+        @test occursin("https://github.com/JuliaQUBO/PseudoBooleanOptimization.jl/actions/workflows/ci.yml", readme)
+        @test occursin("https://JuliaQUBO.github.io/PseudoBooleanOptimization.jl/dev", readme)
+        @test occursin(raw"github.com/JuliaQUBO/PseudoBooleanOptimization.jl.git", docs_make)
+        @test "David E. Bernal Neira <dbernaln@purdue.edu>" in project["authors"]
+    end
+
     return nothing
 end
