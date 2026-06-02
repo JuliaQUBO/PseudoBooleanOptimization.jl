@@ -5,3 +5,4 @@ PseudoBooleanOptimization = "c8fa9a04-bc42-452d-8558-dc51757be744"
 
 [compat]
 Documenter = "1"
+DocumenterDiagrams = "1.0.0"
