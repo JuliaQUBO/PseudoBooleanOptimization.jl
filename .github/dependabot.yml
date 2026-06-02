@@ -13,6 +13,8 @@ updates:
     directory: "/docs"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "PseudoBooleanOptimization"
     groups:
       docs-julia-dependencies:
         patterns:
