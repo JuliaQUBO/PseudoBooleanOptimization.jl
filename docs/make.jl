@@ -36,7 +36,7 @@ makedocs(;
     workdir  = @__DIR__
 )
 
-if "--skip-deploy" ∈ ARGS
+if "--skip-deploy" ∈ ARGS || get(ENV, "GITHUB_ACTOR", "") == "dependabot[bot]"
     @warn "Skipping deployment"
 else
     deploydocs(
