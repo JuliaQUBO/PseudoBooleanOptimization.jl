@@ -7,12 +7,8 @@ using LinearAlgebra
 using MutableArithmetics
 const MA = MutableArithmetics
 
-# Versioning
-using TOML
 const __PROJECT__ = abspath(dirname(pathof(PBO)), "..")
-const __VERSION__ = VersionNumber(
-    getindex(TOML.parsefile(joinpath(__PROJECT__, "Project.toml")), "version"),
-)
+const __VERSION__ = pkgversion(PBO)
 
 # Interface Definition
 include("interface/variables.jl")
