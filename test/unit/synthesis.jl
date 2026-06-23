@@ -10,7 +10,7 @@ end
 
 function test_regular_xorsat_planted_solutions()
     @testset "Regular XORSAT planted solutions" begin
-        for (V, n, k) in ((Int, 6, 3), (Symbol, 8, 5))
+        for (V, n, k) in ((Int, 4, 2), (Symbol, 6, 3), (Int, 8, 4), (Symbol, 8, 5))
             F = PBO.TermDictPBF{V,Float64}
             rng = Random.MersenneTwister(27 + n)
 

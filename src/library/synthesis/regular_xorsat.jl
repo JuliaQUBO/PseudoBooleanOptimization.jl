@@ -46,9 +46,10 @@ function k_regular_k_xorsat(
         if !isnothing(x)
             # Convert to boolean
             # s = 2x - 1
-            # ∑ᵢ (-1)^cᵢ ∏ⱼ (2xᵢⱼ - 1) = ∑ᵢ (-1)^c[i] (2xᵢ₁ - 1) ⋯ (2xᵢₖ - 1) = 2^
+            # If ∑ⱼ xᵢⱼ ≡ cᵢ (mod 2), then ∏ⱼ(2xᵢⱼ - 1) = (-1)^(k - cᵢ).
+            # Scale each clause by (-1)^(k + cᵢ + 1) so every satisfied clause contributes -1.
             f = sum(
-                (-one(T))^c[i] *
+                (-one(T))^(k + c[i] + 1) *
                 prod([F(varmap(V, idx[i, j]) => T(2), -one(T)) for j = 1:k])
                 for i = 1:n
             )

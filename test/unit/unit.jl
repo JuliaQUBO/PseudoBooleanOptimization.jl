@@ -1,4 +1,5 @@
 include("variables.jl")
+include("mod2linsolve.jl")
 include("term_parser.jl")
 include("constructors.jl")
 include("operators.jl")
@@ -13,6 +14,7 @@ include("ci.jl")
 function unit_tests()
     @testset "□ Unit Tests" verbose = true begin
         test_variable_system()
+        test_mod2linsolve()
         test_term_parser()
         test_constructors()
         test_operators()
