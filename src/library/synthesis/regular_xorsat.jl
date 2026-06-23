@@ -33,26 +33,29 @@ function k_regular_k_xorsat(
 
         A .= 0
 
-        for i = 1:n, j = 1:k, l = 1:n
-            A[i, idx[l, j]] = 1
+        for i = 1:n, j = 1:k
+            A[i, idx[i, j]] = 1
         end
 
         rand!(rng, b, (0, 1))
 
         c .= b # copy values before elimination
 
-        num_solutions = _mod2_numsolutions!(A, b)
+        x = _mod2_solution!(A, b)
 
-        if num_solutions > 0
+        if !isnothing(x)
             # Convert to boolean
             # s = 2x - 1
             # ∑ᵢ (-1)^cᵢ ∏ⱼ (2xᵢⱼ - 1) = ∑ᵢ (-1)^c[i] (2xᵢ₁ - 1) ⋯ (2xᵢₖ - 1) = 2^
-            f = sum((-1.0)^c[i] * prod([F(idx[i, j] => 2.0, -1.0) for j = 1:k]) for i = 1:n)
+            f = sum(
+                (-one(T))^c[i] *
+                prod([F(varmap(V, idx[i, j]) => T(2), -one(T)) for j = 1:k])
+                for i = 1:n
+            )
 
             quadratize!(f, quad)
 
-            # TODO: Return planted solution
-            return (f, Dict{V,Int}[]) # no planted solutions
+            return (f, Dict{V,Int}[Dict{V,Int}(varmap(V, i) => x[i] for i = 1:n)])
         end
     end
 

@@ -72,6 +72,47 @@ function _mod2_numsolutions(A::AbstractMatrix{U}, b::AbstractVector{U}) where {U
     return 2^(n - rank)
 end
 
+function _mod2_solution!(A::AbstractMatrix{U}, b::AbstractVector{U}) where {U<:Integer}
+    _mod2_elimination!(A, b)
+
+    return _mod2_solution(A, b)
+end
+
+function _mod2_solution(A::AbstractMatrix{U}, b::AbstractVector{U}) where {U<:Integer}
+    m, n = size(A)
+
+    x = zeros(U, n)
+
+    @inbounds for i = m:-1:1
+        pivot = 0
+
+        for j = 1:n
+            if !iszero(A[i, j])
+                pivot = j
+                break
+            end
+        end
+
+        if iszero(pivot)
+            if !iszero(b[i])
+                return nothing
+            end
+
+            continue
+        end
+
+        xi = b[i]
+
+        for j = (pivot+1):n
+            xi ⊻= A[i, j] & x[j]
+        end
+
+        x[pivot] = xi
+    end
+
+    return x
+end
+
 function _mod2_elimination!(A::AbstractMatrix{U}, b::AbstractVector{U}) where {U<:Integer}
     m, n = size(A)
 
@@ -99,11 +140,13 @@ function _mod2_elimination!(A::AbstractMatrix{U}, b::AbstractVector{U}) where {U
         end
 
         for k = (i+1):m
+            a = A[k, j]
+
             for l = 1:n
-                A[k, l] ⊻= A[k, j] & A[i, l]
+                A[k, l] ⊻= a & A[i, l]
             end
 
-            b[k] ⊻= A[k, j] & b[i]
+            b[k] ⊻= a & b[i]
         end
 
         i += 1
