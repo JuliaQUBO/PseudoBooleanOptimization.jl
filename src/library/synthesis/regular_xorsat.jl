@@ -33,26 +33,32 @@ function k_regular_k_xorsat(
 
         A .= 0
 
-        for i = 1:n, j = 1:k, l = 1:n
-            A[i, idx[l, j]] = 1
+        for i = 1:n, j = 1:k
+            A[i, idx[i, j]] = 1
         end
 
         rand!(rng, b, (0, 1))
 
         c .= b # copy values before elimination
 
-        num_solutions = _mod2_numsolutions!(A, b)
+        x = _mod2_solution!(A, b)
 
-        if num_solutions > 0
+        if !isnothing(x)
             # Convert to boolean
             # s = 2x - 1
-            # ∑ᵢ (-1)^cᵢ ∏ⱼ (2xᵢⱼ - 1) = ∑ᵢ (-1)^c[i] (2xᵢ₁ - 1) ⋯ (2xᵢₖ - 1) = 2^
-            f = sum((-1.0)^c[i] * prod([F(idx[i, j] => 2.0, -1.0) for j = 1:k]) for i = 1:n)
+            # If ∑ⱼ xᵢⱼ ≡ cᵢ (mod 2), then ∏ⱼ(2xᵢⱼ - 1) = (-1)^(k - cᵢ).
+            # Scale each clause by (-1)^(k + cᵢ + 1) so every satisfied clause contributes -1.
+            f = sum(
+                (-one(T))^(k + c[i] + 1) *
+                prod([F(varmap(V, idx[i, j]) => T(2), -one(T)) for j = 1:k])
+                for i = 1:n
+            )
 
-            quadratize!(f, quad)
+            solution = Dict{V,Int}(varmap(V, i) => x[i] for i = 1:n)
 
-            # TODO: Return planted solution
-            return (f, Dict{V,Int}[]) # no planted solutions
+            _quadratize_with_solution!(f, solution, quad)
+
+            return (f, Dict{V,Int}[solution])
         end
     end
 
@@ -103,4 +109,122 @@ function r_regular_k_xorsat(
     quad::Union{Quadratization,Nothing} = nothing,
 ) where {V,T,F<:AbstractPBF{V,T}}
     return r_regular_k_xorsat(Random.GLOBAL_RNG, F, n, r, k; quad)
+end
+
+function _quadratize_with_solution!(
+    f::AbstractPBF{V,T},
+    solution::Dict{V,Int},
+    quad::Union{Quadratization,Nothing},
+) where {V,T}
+    isnothing(quad) && return f
+
+    terms = collect(f)
+
+    quad.stable && sort!(terms; by = first, lt = varlt)
+
+    aux = vargen(f; start = -1, step = -1)
+
+    for (omega, c) in terms
+        length(omega) > 2 || continue
+
+        variables = _quadratization_auxiliaries!(aux, solution, omega, c, quad)
+
+        term_aux = function (n::Union{Integer,Nothing} = nothing)
+            if isnothing(n)
+                @assert length(variables) == 1
+
+                return only(variables)
+            else
+                @assert n == length(variables)
+
+                return variables
+            end
+        end
+
+        quadratize!(term_aux, f, omega, c, quad)
+    end
+
+    return f
+end
+
+function _quadratization_auxiliaries!(
+    aux,
+    solution::Dict{V,Int},
+    omega::AbstractTerm{V},
+    c::T,
+    quad::Quadratization,
+) where {V,T}
+    throw(
+        ArgumentError(
+            "Unsupported quadratization method $(typeof(quad.method)) for planted solution completion",
+        ),
+    )
+end
+
+function _quadratization_auxiliaries!(
+    aux,
+    solution::Dict{V,Int},
+    omega::AbstractTerm{V},
+    c::T,
+    quad::Quadratization{DEFAULT},
+) where {V,T}
+    if quad.sign * c < zero(T)
+        return _quadratization_auxiliaries!(
+            aux,
+            solution,
+            omega,
+            c,
+            Quadratization(NTR_KZFD(); stable = quad.stable, sign = quad.sign),
+        )
+    else
+        return _quadratization_auxiliaries!(
+            aux,
+            solution,
+            omega,
+            c,
+            Quadratization(PTR_BG(); stable = quad.stable, sign = quad.sign),
+        )
+    end
+end
+
+function _quadratization_auxiliaries!(
+    aux,
+    solution::Dict{V,Int},
+    omega::AbstractTerm{V},
+    c::T,
+    quad::Quadratization{NTR_KZFD},
+) where {V,T}
+    @assert quad.sign * c < zero(T)
+
+    variable = aux()::V
+    coefficient = sum(solution[v] for v in omega; init = 0) - (length(omega) - 1)
+
+    solution[variable] = quad.sign * c * coefficient < zero(T) ? 1 : 0
+
+    return V[variable]
+end
+
+function _quadratization_auxiliaries!(
+    aux,
+    solution::Dict{V,Int},
+    omega::AbstractTerm{V},
+    c::T,
+    quad::Quadratization{PTR_BG},
+) where {V,T}
+    @assert quad.sign * c > zero(T)
+
+    variables = aux(length(omega) - 2)::Vector{V}
+    # Keep this order in lockstep with PTR_BG.quadratize!, which also uses collect(ω).
+    terms = collect(omega)::Vector{V}
+
+    for i = 1:(length(omega)-2)
+        coefficient =
+            length(omega) - i - 1 +
+            solution[terms[i]] -
+            sum(solution[terms[j]] for j = (i+1):length(omega); init = 0)
+
+        solution[variables[i]] = quad.sign * c * coefficient < zero(T) ? 1 : 0
+    end
+
+    return variables
 end
