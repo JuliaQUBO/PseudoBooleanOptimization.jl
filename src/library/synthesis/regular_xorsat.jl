@@ -110,39 +110,3 @@ function r_regular_k_xorsat(
 ) where {V,T,F<:AbstractPBF{V,T}}
     return r_regular_k_xorsat(Random.GLOBAL_RNG, F, n, r, k; quad)
 end
-
-function _quadratize_with_solution!(
-    f::AbstractPBF{V,T},
-    solution::Dict{V,Int},
-    quad::Union{Quadratization,Nothing},
-) where {V,T}
-    isnothing(quad) && return f
-
-    terms = collect(f)
-
-    quad.stable && sort!(terms; by = first, lt = varlt)
-
-    aux = vargen(f; start = -1, step = -1)
-
-    for (omega, c) in terms
-        length(omega) > 2 || continue
-
-        variables = _quadratization_auxiliaries!(aux, solution, omega, c, quad)
-
-        term_aux = function (n::Union{Integer,Nothing} = nothing)
-            if isnothing(n)
-                @assert length(variables) == 1
-
-                return only(variables)
-            else
-                @assert n == length(variables)
-
-                return variables
-            end
-        end
-
-        quadratize!(term_aux, f, omega, c, quad)
-    end
-
-    return f
-end
