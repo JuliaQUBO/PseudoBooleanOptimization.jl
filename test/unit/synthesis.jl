@@ -1,5 +1,7 @@
 using Random
 
+struct UnsupportedSynthesisQuadratization <: PBO.QuadratizationMethod end
+
 function test_synthesis()
     @testset "Synthesis" verbose = true begin
         test_regular_xorsat_planted_solutions()
@@ -76,6 +78,21 @@ function test_quadratization_auxiliary_assignments()
                 @test PBO.isconstant(original_y)
                 @test y[nothing] ≈ original_y[nothing]
             end
+
+            err = try
+                PBO._quadratize_with_solution!(
+                    F((1, 2, 3) => 2.0),
+                    Dict{V,Int}(1 => 1, 2 => 0, 3 => 1),
+                    PBO.Quadratization(UnsupportedSynthesisQuadratization()),
+                )
+
+                nothing
+            catch err
+                err
+            end
+
+            @test err isa ArgumentError
+            @test occursin("Unsupported quadratization method", sprint(showerror, err))
         end
     end
 

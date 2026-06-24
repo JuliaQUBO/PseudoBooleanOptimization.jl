@@ -152,6 +152,20 @@ function _quadratization_auxiliaries!(
     solution::Dict{V,Int},
     omega::AbstractTerm{V},
     c::T,
+    quad::Quadratization,
+) where {V,T}
+    throw(
+        ArgumentError(
+            "Unsupported quadratization method $(typeof(quad.method)) for planted solution completion",
+        ),
+    )
+end
+
+function _quadratization_auxiliaries!(
+    aux,
+    solution::Dict{V,Int},
+    omega::AbstractTerm{V},
+    c::T,
     quad::Quadratization{DEFAULT},
 ) where {V,T}
     if quad.sign * c < zero(T)
@@ -200,6 +214,7 @@ function _quadratization_auxiliaries!(
     @assert quad.sign * c > zero(T)
 
     variables = aux(length(omega) - 2)::Vector{V}
+    # Keep this order in lockstep with PTR_BG.quadratize!, which also uses collect(ω).
     terms = collect(omega)::Vector{V}
 
     for i = 1:(length(omega)-2)
