@@ -1,12 +1,9 @@
 using Random
 
-struct UnsupportedSynthesisQuadratization <: PBO.QuadratizationMethod end
-
 function test_synthesis()
     @testset "Synthesis" verbose = true begin
         test_regular_xorsat_planted_solutions()
         test_quadratized_regular_xorsat_planted_solutions()
-        test_quadratization_auxiliary_assignments()
     end
 
     return nothing
@@ -31,68 +28,6 @@ function test_regular_xorsat_planted_solutions()
 
             @test PBO.isconstant(y)
             @test y[nothing] ≈ -n
-        end
-    end
-
-    return nothing
-end
-
-function test_quadratization_auxiliary_assignments()
-    @testset "Quadratization auxiliary assignments" begin
-        let V = Int, T = Float64, F = PBO.TermDictPBF{V,T}
-            for (f, x, quad) in (
-                (
-                    F((1, 2, 3) => -2.0),
-                    Dict{V,Int}(1 => 1, 2 => 1, 3 => 1),
-                    PBO.Quadratization(PBO.NTR_KZFD()),
-                ),
-                (
-                    F((1, 2, 3, 4) => 2.0),
-                    Dict{V,Int}(1 => 1, 2 => 0, 3 => 1, 4 => 1),
-                    PBO.Quadratization(PBO.PTR_BG()),
-                ),
-                (
-                    F((1, 2, 3) => 2.0),
-                    Dict{V,Int}(1 => 1, 2 => 1, 3 => 1),
-                    PBO.Quadratization(PBO.NTR_KZFD(); sign = -1),
-                ),
-                (
-                    F((1, 2, 3, 4) => -2.0),
-                    Dict{V,Int}(1 => 1, 2 => 0, 3 => 1, 4 => 1),
-                    PBO.Quadratization(PBO.PTR_BG(); sign = -1),
-                ),
-            )
-                original_f = copy(f)
-                original_x = copy(x)
-
-                PBO._quadratize_with_solution!(f, x, quad)
-
-                @test f == PBO.quadratize(original_f, quad)
-                @test Set(keys(x)) == Set(PBO.variables(f))
-                @test all(v -> v in (0, 1), values(x))
-
-                y = f(x)
-                original_y = original_f(original_x)
-
-                @test PBO.isconstant(y)
-                @test PBO.isconstant(original_y)
-                @test y[nothing] ≈ original_y[nothing]
-            end
-
-            err = try
-                PBO._quadratize_with_solution!(
-                    F((1, 2, 3) => 2.0),
-                    Dict{V,Int}(1 => 1, 2 => 0, 3 => 1),
-                    PBO.Quadratization(UnsupportedSynthesisQuadratization()),
-                )
-
-                nothing
-            catch err
-                err
-            end
-
-            @test err isa ArgumentError
-            @test occursin("Unsupported quadratization method", sprint(showerror, err))
         end
     end
 

@@ -63,3 +63,27 @@ function quadratize!(
 
     return f
 end
+
+function _quadratization_auxiliaries!(
+    aux,
+    solution::Dict{V,Int},
+    ω::AbstractTerm{V},
+    c::T,
+    quad::Quadratization{PTR_BG},
+) where {V,T}
+    @assert quad.sign * c > zero(T)
+
+    variables = aux(length(ω) - 2)::Vector{V}
+    terms = collect(ω)::Vector{V}
+
+    for i = 1:(length(ω)-2)
+        coefficient =
+            length(ω) - i - 1 +
+            solution[terms[i]] -
+            sum(solution[terms[j]] for j = (i+1):length(ω); init = 0)
+
+        solution[variables[i]] = quad.sign * c * coefficient < zero(T) ? 1 : 0
+    end
+
+    return variables
+end

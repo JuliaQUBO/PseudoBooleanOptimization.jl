@@ -1,3 +1,77 @@
+struct UnsupportedQuadratizationAuxiliaries <: PBO.QuadratizationMethod end
+
+function test_quadratization_auxiliary_completion()
+    @testset "Auxiliary assignments" begin
+        let V = Int, T = Float64, F = PBO.TermDictPBF{V,T}
+            for (f, x, quad) in (
+                (
+                    F((1, 2, 3) => -2.0),
+                    Dict{V,Int}(1 => 1, 2 => 1, 3 => 1),
+                    PBO.Quadratization(PBO.NTR_KZFD()),
+                ),
+                (
+                    F((1, 2, 3, 4) => 2.0),
+                    Dict{V,Int}(1 => 1, 2 => 0, 3 => 1, 4 => 1),
+                    PBO.Quadratization(PBO.PTR_BG()),
+                ),
+                (
+                    F((1, 2, 3) => 2.0),
+                    Dict{V,Int}(1 => 1, 2 => 1, 3 => 1),
+                    PBO.Quadratization(PBO.NTR_KZFD(); sign = -1),
+                ),
+                (
+                    F((1, 2, 3, 4) => -2.0),
+                    Dict{V,Int}(1 => 1, 2 => 0, 3 => 1, 4 => 1),
+                    PBO.Quadratization(PBO.PTR_BG(); sign = -1),
+                ),
+                (
+                    F((3, 1, 2, 4) => 2.0),
+                    Dict{V,Int}(1 => 0, 2 => 1, 3 => 1, 4 => 0),
+                    PBO.Quadratization(PBO.DEFAULT(); stable = true),
+                ),
+                (
+                    F((1, 2, 3, 4, 5) => -2.0),
+                    Dict{V,Int}(1 => 1, 2 => 0, 3 => 1, 4 => 1, 5 => 0),
+                    PBO.Quadratization(PBO.DEFAULT(); sign = -1),
+                ),
+            )
+                original_f = copy(f)
+                original_x = copy(x)
+
+                PBO._quadratize_with_solution!(f, x, quad)
+
+                @test f == PBO.quadratize(original_f, quad)
+                @test Set(keys(x)) == Set(PBO.variables(f))
+                @test all(v -> v in (0, 1), values(x))
+
+                y = f(x)
+                original_y = original_f(original_x)
+
+                @test PBO.isconstant(y)
+                @test PBO.isconstant(original_y)
+                @test y[nothing] ≈ original_y[nothing]
+            end
+
+            err = try
+                PBO._quadratize_with_solution!(
+                    F((1, 2, 3) => 2.0),
+                    Dict{V,Int}(1 => 1, 2 => 0, 3 => 1),
+                    PBO.Quadratization(UnsupportedQuadratizationAuxiliaries()),
+                )
+
+                nothing
+            catch err
+                err
+            end
+
+            @test err isa ArgumentError
+            @test occursin("Unsupported quadratization method", sprint(showerror, err))
+        end
+    end
+
+    return nothing
+end
+
 function test_NTR_KZFD()
     @testset "→ NTR-KZFD" begin
         @testset "∴ TermDict/Symbol" begin
@@ -281,6 +355,7 @@ end
 
 function test_quadratization()
     @testset "⊛ Quadratization" begin
+        test_quadratization_auxiliary_completion()
         test_NTR_KZFD()
         test_PTR_BG()
         test_DEFAULT()
