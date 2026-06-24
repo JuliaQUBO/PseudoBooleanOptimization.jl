@@ -33,3 +33,17 @@ end
 function quadratize(f::AbstractPBF, quad::Union{Quadratization,Nothing} = Quadratization(DEFAULT()))
     return quadratize!(copy(f), quad)
 end
+
+function _quadratization_auxiliaries!(
+    aux,
+    solution::Dict{V,Int},
+    ω::AbstractTerm{V},
+    c::T,
+    quad::Quadratization,
+) where {V,T}
+    throw(
+        ArgumentError(
+            "Unsupported quadratization method $(typeof(quad.method)) for planted solution completion",
+        ),
+    )
+end
