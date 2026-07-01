@@ -20,6 +20,17 @@ updates:
         patterns:
           - "*"
 
+  - package-ecosystem: "julia"
+    directory: "/benchmark"
+    schedule:
+      interval: "weekly"
+    ignore:
+      - dependency-name: "PseudoBooleanOptimization"
+    groups:
+      benchmark-julia-dependencies:
+        patterns:
+          - "*"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
