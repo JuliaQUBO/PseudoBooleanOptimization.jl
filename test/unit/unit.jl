@@ -10,6 +10,7 @@ include("quadratization.jl")
 include("synthesis.jl")
 include("print.jl")
 include("ci.jl")
+include("citation.jl")
 
 function unit_tests()
     @testset "□ Unit Tests" verbose = true begin
@@ -25,6 +26,7 @@ function unit_tests()
         test_synthesis()
         test_print()
         test_ci_configuration()
+        test_citation_metadata()
     end
 
     return nothing
