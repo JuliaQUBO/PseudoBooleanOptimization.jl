@@ -34,6 +34,9 @@ another concept record for a new version.
       curl --fail --location --output /dev/null https://doi.org/10.5281/zenodo.21650202
       ```
 
+      If Zenodo responds slowly or returns HTTP 429, wait for its `Retry-After`
+      interval and retry once before treating the DOI as broken.
+
 - [ ] Download the Zenodo archive, compare its checksum with the uploaded
       release artifact, and confirm the archive contains the tagged
       `Project.toml` version.
