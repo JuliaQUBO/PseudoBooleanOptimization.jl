@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- Nothing yet.
+- Add Zenodo concept and version DOI citation metadata and release archive
+  verification guidance.
 
 ## v0.3.0 - 2026-06-24
 
