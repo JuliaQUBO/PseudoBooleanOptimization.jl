@@ -28,6 +28,8 @@ where ``\mathbf{x} \in \mathbb{B}^k, w \in \mathbb{B}``.
 """
 struct NTR_KZFD <: QuadratizationMethod end
 
+_supports_auxiliary_completion(::NTR_KZFD) = true
+
 function quadratize!(
     aux,
     f::F,
@@ -61,6 +63,30 @@ function quadratize!(
     return f
 end
 
+function _complete_term_auxiliaries!(
+    solution::AbstractDict{V,Int},
+    variables::AbstractVector{V},
+    ω::AbstractTerm{V},
+    c::T,
+    quad::Quadratization{NTR_KZFD},
+) where {V,T}
+    @assert quad.sign * c < zero(T)
+    if length(variables) != 1
+        throw(
+            ArgumentError(
+                "Expected 1 auxiliary variable for NTR_KZFD term of degree $(length(ω)), got $(length(variables))",
+            ),
+        )
+    end
+
+    variable = only(variables)
+    coefficient = sum(solution[v] for v in ω; init = 0) - (length(ω) - 1)
+
+    solution[variable] = quad.sign * c * coefficient < zero(T) ? 1 : 0
+
+    return variables
+end
+
 function _quadratization_auxiliaries!(
     aux,
     solution::Dict{V,Int},
@@ -70,10 +96,7 @@ function _quadratization_auxiliaries!(
 ) where {V,T}
     @assert quad.sign * c < zero(T)
 
-    variable = aux()::V
-    coefficient = sum(solution[v] for v in ω; init = 0) - (length(ω) - 1)
+    variables = V[aux()::V]
 
-    solution[variable] = quad.sign * c * coefficient < zero(T) ? 1 : 0
-
-    return V[variable]
+    return _complete_term_auxiliaries!(solution, variables, ω, c, quad)
 end
