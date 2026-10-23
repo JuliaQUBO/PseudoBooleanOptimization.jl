@@ -379,6 +379,19 @@ function test_quadratization_auxiliary_completion()
                 Dict(1 => 0, 2 => 1, 3 => 1);
                 qubo = copy(q),
             )
+            sym_pbf = PBO.TermDictPBF{Symbol,T}((:x, :y, :z) => 2.0)
+            @test !isvalid(rec; original = sym_pbf)
+            @test !isvalid(rec; qubo = sym_pbf)
+            @test_throws ArgumentError PBO.complete_auxiliaries(
+                rec,
+                Dict(1 => 0, 2 => 1, 3 => 1);
+                original = sym_pbf,
+            )
+            @test_throws ArgumentError PBO.complete_auxiliaries(
+                rec,
+                Dict(1 => 0, 2 => 1, 3 => 1);
+                qubo = sym_pbf,
+            )
 
             # Invalidation when quadratized coefficients change
             q[-1] += 1.0

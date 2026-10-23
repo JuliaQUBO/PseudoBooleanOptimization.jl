@@ -130,6 +130,8 @@ function _select_term_quadratization(
     return quad
 end
 
+_same_pbf(::AbstractPBF, ::AbstractPBF) = false
+
 function _same_pbf(f::AbstractPBF{V,Tf}, g::AbstractPBF{V,Tg}) where {V,Tf,Tg}
     length(f) == length(g) || return false
 
