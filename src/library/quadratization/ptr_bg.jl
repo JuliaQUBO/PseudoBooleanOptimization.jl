@@ -24,6 +24,8 @@ where ``\mathbf{x} \in \mathbb{B}^k`` and ``\mathbf{w} \in \mathbb{B}^{k-2}``
 """
 struct PTR_BG <: QuadratizationMethod end
 
+_supports_auxiliary_completion(::PTR_BG) = true
+
 function quadratize!(
     aux,
     f::F,
@@ -64,6 +66,37 @@ function quadratize!(
     return f
 end
 
+function _complete_term_auxiliaries!(
+    solution::AbstractDict{V,Int},
+    variables::AbstractVector{V},
+    ω::AbstractTerm{V},
+    c::T,
+    quad::Quadratization{PTR_BG},
+) where {V,T}
+    @assert quad.sign * c > zero(T)
+    expected = length(ω) - 2
+    if length(variables) != expected
+        throw(
+            ArgumentError(
+                "Expected $expected auxiliary variables for PTR_BG term of degree $(length(ω)), got $(length(variables))",
+            ),
+        )
+    end
+
+    terms = collect(ω)::Vector{V}
+
+    for i = 1:expected
+        coefficient =
+            length(ω) - i - 1 +
+            solution[terms[i]] -
+            sum(solution[terms[j]] for j = (i+1):length(ω); init = 0)
+
+        solution[variables[i]] = quad.sign * c * coefficient < zero(T) ? 1 : 0
+    end
+
+    return variables
+end
+
 function _quadratization_auxiliaries!(
     aux,
     solution::Dict{V,Int},
@@ -74,16 +107,6 @@ function _quadratization_auxiliaries!(
     @assert quad.sign * c > zero(T)
 
     variables = aux(length(ω) - 2)::Vector{V}
-    terms = collect(ω)::Vector{V}
 
-    for i = 1:(length(ω)-2)
-        coefficient =
-            length(ω) - i - 1 +
-            solution[terms[i]] -
-            sum(solution[terms[j]] for j = (i+1):length(ω); init = 0)
-
-        solution[variables[i]] = quad.sign * c * coefficient < zero(T) ? 1 : 0
-    end
-
-    return variables
+    return _complete_term_auxiliaries!(solution, variables, ω, c, quad)
 end

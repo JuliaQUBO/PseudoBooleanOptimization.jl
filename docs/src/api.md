@@ -61,9 +61,21 @@ PBO.relaxedgcd
 ## Quadratization
 
 ```@docs
+PBO.QuadratizationMethod
 PBO.Quadratization
+PBO.QuadratizationStep
+PBO.QuadratizationRecord
 PBO.quadratize
 PBO.quadratize!
+PBO.complete_auxiliaries
+PBO.complete_auxiliaries!
+PBO.original_variables
+PBO.auxiliary_variables
+PBO.quadratization_steps
+PBO.objective_sense
+PBO.original_function
+PBO.quadratized_function
+PBO.invalidate!
 PBO.infer_quadratization
 ```
 
