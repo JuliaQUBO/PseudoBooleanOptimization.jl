@@ -1,4 +1,17 @@
 struct UnsupportedQuadratizationAuxiliaries <: PBO.QuadratizationMethod end
+struct CustomWholePolyQuadratization <: PBO.QuadratizationMethod end
+
+function PBO.quadratize!(
+    aux,
+    f::PBO.AbstractPBF,
+    quad::PBO.Quadratization{CustomWholePolyQuadratization},
+)
+    return PBO.quadratize!(
+        aux,
+        f,
+        PBO.Quadratization(PBO.DEFAULT(); stable = quad.stable, sign = quad.sign),
+    )
+end
 
 function _all_binary_assignments(vars::Vector{V}) where {V}
     n = length(vars)
@@ -389,6 +402,38 @@ function test_quadratization_auxiliary_completion()
             PBO.invalidate!(rec3)
             @test !isvalid(rec3)
             @test_throws ArgumentError PBO.complete_auxiliaries(rec3, Dict(1 => 0, 2 => 1, 3 => 1))
+
+            # Invalidation when mutable (BigFloat) coefficients are mutated in-place
+            let BF = PBO.TermDictPBF{Int,BigFloat}
+                f_bf_q = BF((1, 2, 3) => big"2.0")
+                q_bf, rec_bf_q = PBO.quadratize(f_bf_q, quad; record = true)
+                @test isvalid(rec_bf_q)
+                PBO.MA.operate!(+, q_bf[-1], big"10.0")
+                @test !isvalid(rec_bf_q)
+                @test_throws ArgumentError PBO.complete_auxiliaries(
+                    rec_bf_q,
+                    Dict(1 => 0, 2 => 1, 3 => 1),
+                )
+
+                f_bf_orig = BF((1, 2, 3) => big"2.0")
+                _, rec_bf_orig = PBO.quadratize(f_bf_orig, quad; record = true)
+                @test isvalid(rec_bf_orig)
+                PBO.MA.operate!(+, f_bf_orig[(1, 2, 3)], big"10.0")
+                @test !isvalid(rec_bf_orig)
+                @test_throws ArgumentError PBO.complete_auxiliaries(
+                    rec_bf_orig,
+                    Dict(1 => 0, 2 => 1, 3 => 1),
+                )
+            end
+
+            # Custom whole-polynomial quadratize! overload compatibility
+            custom_whole_quad = PBO.Quadratization(CustomWholePolyQuadratization(); stable = true, sign = 1)
+            expected_whole = PBO.quadratize(f, quad)
+            @test PBO.quadratize(f, custom_whole_quad) == expected_whole
+            @test PBO.quadratize(PBO.vargen(f; start = -1, step = -1), f, custom_whole_quad) == expected_whole
+            f_whole_inplace = copy(f)
+            @test PBO.quadratize!(f_whole_inplace, custom_whole_quad) == expected_whole
+            @test_throws ArgumentError PBO.quadratize(f, custom_whole_quad; record = true)
         end
     end
 

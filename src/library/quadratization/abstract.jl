@@ -1,3 +1,18 @@
+_clone_value(x) = isbits(x) ? x : deepcopy(MA.copy_if_mutable(x))
+
+function _snapshot_pbf(f::F)::F where {V,T,F<:AbstractPBF{V,T}}
+    g = copy(f)
+    isbitstype(T) && isbitstype(V) && return g
+
+    empty!(g)
+    sizehint!(g, length(f))
+    for (ω, c) in f
+        g[Term{V}(V[_clone_value(v) for v in ω])] = _clone_value(c)
+    end
+
+    return g
+end
+
 @doc raw"""
     QuadratizationStep{V,T,M<:QuadratizationMethod}
 
@@ -21,7 +36,12 @@ struct QuadratizationStep{V,T,M<:QuadratizationMethod}
         method::M,
         auxiliary_variables::Vector{V},
     ) where {V,T,M<:QuadratizationMethod}
-        return new{V,T,M}(term, coefficient, method, copy(auxiliary_variables))
+        return new{V,T,M}(
+            Term{V}(V[_clone_value(v) for v in term]),
+            _clone_value(coefficient),
+            method,
+            V[_clone_value(v) for v in auxiliary_variables],
+        )
     end
 end
 
@@ -83,8 +103,8 @@ struct QuadratizationRecord{V,T,F<:AbstractPBF{V,T}}
         end
 
         return new{V,T,F}(
-            copy(original_variables),
-            copy(auxiliary_variables),
+            V[_clone_value(v) for v in original_variables],
+            V[_clone_value(v) for v in auxiliary_variables],
             QuadratizationStep{V,T}[
                 QuadratizationStep(s.term, s.coefficient, s.method, s.auxiliary_variables)
                 for s in steps
@@ -92,9 +112,9 @@ struct QuadratizationRecord{V,T,F<:AbstractPBF{V,T}}
             Int(sign),
             quadratization,
             original,
-            copy(original_snapshot),
+            _snapshot_pbf(original_snapshot),
             qubo,
-            copy(qubo_snapshot),
+            _snapshot_pbf(qubo_snapshot),
             valid,
         )
     end
@@ -130,7 +150,7 @@ function _normalize_original_variables(
         return f_vars
     end
 
-    orig_vars = V[v for v in original_variables]
+    orig_vars = V[_clone_value(v) for v in original_variables]
     sortunique!(orig_vars; lt = varlt)
     orig_set = Set{V}(orig_vars)
 
@@ -148,11 +168,11 @@ function _normalize_original_variables(
 end
 
 function original_variables(record::QuadratizationRecord{V}) where {V}
-    return copy(record.original_variables)
+    return V[_clone_value(v) for v in record.original_variables]
 end
 
 function auxiliary_variables(record::QuadratizationRecord{V}) where {V}
-    return copy(record.auxiliary_variables)
+    return V[_clone_value(v) for v in record.auxiliary_variables]
 end
 
 function quadratization_steps(record::QuadratizationRecord{V,T}) where {V,T}
@@ -168,7 +188,7 @@ end
 
 function original_function(record::QuadratizationRecord)
     _validate_record(record)
-    return copy(record.original_snapshot)
+    return _snapshot_pbf(record.original_snapshot)
 end
 
 function quadratized_function(record::QuadratizationRecord)
@@ -353,6 +373,10 @@ function _quadratize_impl!(
     tracked_original::Union{F,Nothing} = nothing,
 ) where {V,T,F<:AbstractPBF{V,T}}
     if !record
+        if !isnothing(original_variables)
+            _normalize_original_variables(f, original_variables)
+        end
+
         if isnothing(quad)
             return f
         end
@@ -371,7 +395,7 @@ function _quadratize_impl!(
 
     orig_vars = _normalize_original_variables(f, original_variables)
     orig_set = Set{V}(orig_vars)
-    orig_snapshot = copy(f)
+    orig_snapshot = _snapshot_pbf(f)
     steps = QuadratizationStep{V,T}[]
     all_aux = V[]
     seen_aux = Set{V}()
@@ -391,7 +415,8 @@ function _quadratize_impl!(
         for (ω, c) in Ω
             length(ω) > 2 || continue
 
-            term_quad = _select_term_quadratization(ω, c, quad)
+            c_snapshot = _clone_value(c)
+            term_quad = _select_term_quadratization(ω, c_snapshot, quad)
             if !_supports_auxiliary_completion(term_quad.method)
                 throw(
                     ArgumentError(
@@ -459,12 +484,12 @@ function _quadratize_impl!(
                 end
             end
 
-            quadratize!(recording_aux, f, ω, c, term_quad)
+            quadratize!(recording_aux, f, ω, c_snapshot, term_quad)
             push!(
                 steps,
                 QuadratizationStep(
                     Term{V}(collect(ω)),
-                    c,
+                    c_snapshot,
                     term_quad.method,
                     term_aux_vars,
                 ),
@@ -473,7 +498,7 @@ function _quadratize_impl!(
     end
 
     sign = isnothing(quad) ? 1 : quad.sign
-    qubo_snapshot = copy(f)
+    qubo_snapshot = _snapshot_pbf(f)
     rec = QuadratizationRecord{V,T,F}(
         orig_vars,
         all_aux,
@@ -515,13 +540,14 @@ function quadratize!(
     record::Bool = false,
     original_variables = nothing,
 )
-    return quadratize!(
-        vargen(f; start = -1, step = -1),
-        f,
-        quad;
-        record,
-        original_variables,
-    )
+    aux = vargen(f; start = -1, step = -1)
+    if !record
+        if !isnothing(original_variables)
+            _normalize_original_variables(f, original_variables)
+        end
+        return quadratize!(aux, f, quad)
+    end
+    return _quadratize_impl!(aux, f, quad; record = true, original_variables)
 end
 
 function quadratize(
@@ -531,11 +557,17 @@ function quadratize(
     record::Bool = false,
     original_variables = nothing,
 )
+    if !record
+        if !isnothing(original_variables)
+            _normalize_original_variables(f, original_variables)
+        end
+        return quadratize!(aux, _snapshot_pbf(f), quad)
+    end
     return _quadratize_impl!(
         aux,
-        copy(f),
+        _snapshot_pbf(f),
         quad;
-        record,
+        record = true,
         original_variables,
         tracked_original = f,
     )
@@ -547,11 +579,17 @@ function quadratize(
     record::Bool = false,
     original_variables = nothing,
 )
+    if !record
+        if !isnothing(original_variables)
+            _normalize_original_variables(f, original_variables)
+        end
+        return quadratize!(_snapshot_pbf(f), quad)
+    end
     return quadratize(
         vargen(f; start = -1, step = -1),
         f,
         quad;
-        record,
+        record = true,
         original_variables,
     )
 end
@@ -724,4 +762,3 @@ function _quadratize_with_solution!(
 
     return f
 end
-

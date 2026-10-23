@@ -54,3 +54,11 @@ repaired_sample = PBO.complete_auxiliaries(rec, raw_sample)
     repaired_aux = repaired_sample[:aux_1],
 )
 ```
+
+### Record Validity and Invalidation
+
+A [`PBO.QuadratizationRecord`](@ref) is tied to the exact formulation and [`PBO.Quadratization`](@ref) configuration that produced it:
+
+- **Tracked formulation identity**: Out-of-place `q, rec = PBO.quadratize(f, quad; record = true)` tracks both the original polynomial `f` and the returned quadratic polynomial `q`. In-place `f, rec = PBO.quadratize!(f, quad; record = true)` snapshots the pre-quadratization polynomial and tracks the mutated in-place polynomial `f`.
+- **Automatic invalidation on mutation**: Modifying any term or coefficient of the tracked original polynomial `f` (for out-of-place `quadratize`) or the tracked quadratic polynomial `q` (including in-place mutation of mutable coefficient types such as `BigFloat`) causes `isvalid(rec)` to return `false` and [`PBO.complete_auxiliaries`](@ref) / [`PBO.complete_auxiliaries!`](@ref) to throw an `ArgumentError`.
+- **Explicit invalidation and mismatch checks**: Call [`PBO.invalidate!`](@ref) to explicitly invalidate a record, or pass `qubo`, `original`, or `quad` to `isvalid(rec; qubo, original, quad)` / [`PBO.complete_auxiliaries`](@ref) to verify that the record matches a specific formulation object and reduction configuration. Whenever the original coefficients, quadratized coefficients, or reduction configuration change, rerun `quadratize` / `quadratize!` with `record = true` to build a fresh record.
