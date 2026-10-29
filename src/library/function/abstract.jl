@@ -90,20 +90,249 @@ function upperbound(f::F) where {V,T,F<:AbstractPBF{V,T}}
     return sum((c > zero(T) || isempty(ω)) ? c : zero(T) for (ω, c) in f; init = zero(T))
 end
 
-_coercive_accum_type(::Type{<:Integer}) = BigInt
-_coercive_accum_type(::Type{<:Rational}) = Rational{BigInt}
-_coercive_accum_type(::Type{<:AbstractFloat}) = BigFloat
-_coercive_accum_type(::Type{T}) where {T} = typeof(zero(T) + zero(T))
+const _COERCIVE_CLUSTER_SPAN_LIMIT = 65536
 
-function _with_coercive_precision(fn::Function, ::Type{T}) where {T}
-    if T <: AbstractFloat && T !== BigFloat
-        return setprecision(fn, BigFloat, 2112)
-    elseif T === BigFloat
-        return setprecision(fn, BigFloat, max(precision(BigFloat), 2112))
+struct _FloatTermAccum
+    terms::Vector{BigFloat}
+    has_nan::Bool
+    pos_inf::Bool
+    neg_inf::Bool
+end
+
+_FloatTermAccum() = _FloatTermAccum(BigFloat[], false, false, false)
+
+function _push_scaled_float!(acc::_FloatTermAccum, c::Real, shift::Int)
+    if isnan(c)
+        return _FloatTermAccum(acc.terms, true, acc.pos_inf, acc.neg_inf)
+    elseif isinf(c)
+        return _FloatTermAccum(
+            acc.terms,
+            acc.has_nan,
+            acc.pos_inf || (c > 0),
+            acc.neg_inf || (c < 0),
+        )
+    elseif iszero(c)
+        return acc
     else
-        return fn()
+        prec = max(64, precision(c) + 16)
+        bf = setprecision(BigFloat, prec) do
+            ldexp(BigFloat(c), shift)
+        end
+        push!(acc.terms, bf)
+        return acc
     end
 end
+
+function _exact_float_clusters(acc::_FloatTermAccum, min_merge_span::Int = _COERCIVE_CLUSTER_SPAN_LIMIT)
+    if acc.has_nan || (acc.pos_inf && acc.neg_inf)
+        return (:nan, BigFloat[])
+    elseif acc.pos_inf
+        return (:pos_inf, BigFloat[])
+    elseif acc.neg_inf
+        return (:neg_inf, BigFloat[])
+    elseif isempty(acc.terms)
+        return (:finite, BigFloat[])
+    end
+
+    sorted = sort(acc.terms; by = exponent, rev = true)
+    raw_clusters = BigFloat[]
+    n = length(sorted)
+    i = 1
+    while i <= n
+        j = i
+        cluster_msb = exponent(sorted[i])
+        cluster_lsb = exponent(sorted[i]) - precision(sorted[i])
+        while j < n
+            next_msb = exponent(sorted[j + 1])
+            next_lsb = next_msb - precision(sorted[j + 1])
+            if cluster_msb - next_lsb <= min_merge_span
+                cluster_msb = max(cluster_msb, next_msb)
+                cluster_lsb = min(cluster_lsb, next_lsb)
+                j += 1
+            else
+                break
+            end
+        end
+        carry_bits = ceil(Int, log2(max(2, j - i + 2))) + 32
+        work_prec = max(256, cluster_msb - cluster_lsb + carry_bits)
+        c_sum = setprecision(BigFloat, work_prec) do
+            s = zero(BigFloat)
+            for k = i:j
+                s += sorted[k]
+            end
+            return s
+        end
+        if !iszero(c_sum)
+            push!(raw_clusters, c_sum)
+        end
+        i = j + 1
+    end
+
+    isempty(raw_clusters) && return (:finite, BigFloat[])
+
+    # Second pass: merge adjacent non-zero clusters whose bit span is within min_merge_span
+    merged = BigFloat[raw_clusters[1]]
+    for k = 2:length(raw_clusters)
+        prev = merged[end]
+        curr = raw_clusters[k]
+        msb = max(exponent(prev), exponent(curr))
+        lsb = min(exponent(prev) - precision(prev), exponent(curr) - precision(curr))
+        if msb - lsb <= min_merge_span
+            work_prec = max(256, msb - lsb + 64)
+            s = setprecision(BigFloat, work_prec) do
+                BigFloat(prev) + BigFloat(curr)
+            end
+            if iszero(s)
+                pop!(merged)
+            else
+                merged[end] = s
+            end
+        else
+            push!(merged, curr)
+        end
+    end
+
+    return (:finite, merged)
+end
+
+function _eval_float_accum(::Type{H}, acc::_FloatTermAccum, ambient_bf_prec::Int) where {H}
+    target_prec = H === BigFloat ? ambient_bf_prec : max(256, precision(H) + 64)
+    merge_span = max(_COERCIVE_CLUSTER_SPAN_LIMIT, 2 * target_prec + 256)
+    status, clusters = _exact_float_clusters(acc, merge_span)
+    if status === :nan
+        return H === BigFloat ? setprecision(() -> BigFloat(NaN), BigFloat, ambient_bf_prec) : convert(H, NaN)
+    elseif status === :pos_inf
+        return H === BigFloat ? setprecision(() -> BigFloat(Inf), BigFloat, ambient_bf_prec) : convert(H, Inf)
+    elseif status === :neg_inf
+        return H === BigFloat ? setprecision(() -> BigFloat(-Inf), BigFloat, ambient_bf_prec) : convert(H, -Inf)
+    elseif isempty(clusters)
+        return H === BigFloat ? setprecision(() -> zero(BigFloat), BigFloat, ambient_bf_prec) : zero(H)
+    elseif length(clusters) == 1
+        c1 = clusters[1]
+        if H === BigFloat
+            return setprecision(() -> BigFloat(c1), BigFloat, ambient_bf_prec)
+        else
+            return convert(H, c1)
+        end
+    else
+        c1 = clusters[1]
+        c2 = clusters[2]
+        sticky_prec = max(precision(c1), target_prec) + 64
+        adjusted = setprecision(BigFloat, sticky_prec) do
+            base = BigFloat(c1)
+            return c2 > 0 ? nextfloat(base) : prevfloat(base)
+        end
+        if H === BigFloat
+            return setprecision(() -> BigFloat(adjusted), BigFloat, ambient_bf_prec)
+        else
+            return convert(H, adjusted)
+        end
+    end
+end
+
+function _float_accum_abs_le_atol(acc::_FloatTermAccum, atol::Real)
+    status, clusters = _exact_float_clusters(acc)
+    status === :nan && return false
+    isinf(atol) && return true
+    (status === :pos_inf || status === :neg_inf) && return false
+    isempty(clusters) && return true
+    iszero(atol) && return false
+
+    if atol isa Rational
+        atol_rat = Rational{BigInt}(atol)
+        p = numerator(atol_rat)
+        q = denominator(atol_rat)
+        p_bits = ndigits(p, base = 2)
+        q_bits = ndigits(q, base = 2)
+        # Compare |q * sum(clusters)| <= p exactly
+        scaled_acc = _FloatTermAccum()
+        for c in clusters
+            w_prec = max(256, precision(c) + q_bits + 64)
+            qc = setprecision(BigFloat, w_prec) do
+                BigFloat(c) * BigFloat(q)
+            end
+            push!(scaled_acc.terms, qc)
+        end
+        _, q_clusters = _exact_float_clusters(
+            scaled_acc,
+            max(_COERCIVE_CLUSTER_SPAN_LIMIT, p_bits + q_bits + 256),
+        )
+        isempty(q_clusters) && return true
+        c1 = q_clusters[1]
+        s1 = sign(c1)
+        abs_c1_exp = exponent(c1)
+        if abs_c1_exp + 2 < p_bits
+            return true
+        elseif abs_c1_exp - 2 > p_bits
+            return false
+        end
+        cmp_prec = max(256, precision(c1) + p_bits + 64)
+        return setprecision(BigFloat, cmp_prec) do
+            abs_c1 = abs(BigFloat(c1))
+            p_bf = BigFloat(p)
+            if abs_c1 < p_bf
+                return true
+            elseif abs_c1 > p_bf
+                return false
+            else
+                return length(q_clusters) == 1 || sign(q_clusters[2]) != s1
+            end
+        end
+    elseif atol isa Integer
+        p = BigInt(atol)
+        p_bits = ndigits(p, base = 2)
+        _, m_clusters = _exact_float_clusters(
+            acc,
+            max(_COERCIVE_CLUSTER_SPAN_LIMIT, p_bits + 256),
+        )
+        isempty(m_clusters) && return true
+        c1 = m_clusters[1]
+        s1 = sign(c1)
+        abs_c1_exp = exponent(c1)
+        if abs_c1_exp + 2 < p_bits
+            return true
+        elseif abs_c1_exp - 2 > p_bits
+            return false
+        end
+        cmp_prec = max(256, precision(c1) + p_bits + 64)
+        return setprecision(BigFloat, cmp_prec) do
+            abs_c1 = abs(BigFloat(c1))
+            p_bf = BigFloat(p)
+            if abs_c1 < p_bf
+                return true
+            elseif abs_c1 > p_bf
+                return false
+            else
+                return length(m_clusters) == 1 || sign(m_clusters[2]) != s1
+            end
+        end
+    else
+        atol_prec = atol isa AbstractFloat ? precision(atol) : 256
+        _, m_clusters = _exact_float_clusters(
+            acc,
+            max(_COERCIVE_CLUSTER_SPAN_LIMIT, atol_prec + 256),
+        )
+        isempty(m_clusters) && return true
+        c1 = m_clusters[1]
+        s1 = sign(c1)
+        cmp_prec = max(256, precision(c1) + atol_prec + 64)
+        return setprecision(BigFloat, cmp_prec) do
+            abs_c1 = abs(BigFloat(c1))
+            a_bf = BigFloat(atol)
+            if abs_c1 < a_bf
+                return true
+            elseif abs_c1 > a_bf
+                return false
+            else
+                return length(m_clusters) == 1 || sign(m_clusters[2]) != s1
+            end
+        end
+    end
+end
+
+_coercive_accum_type(::Type{<:Integer}) = BigInt
+_coercive_accum_type(::Type{<:Rational}) = Rational{BigInt}
+_coercive_accum_type(::Type{T}) where {T} = typeof(zero(T) + zero(T))
 
 function _coercive_field_from_sums(::Type{H}, l_u::BigInt, q_u::BigInt) where {H}
     return convert(H, (2 * l_u + q_u) // 4)
@@ -140,15 +369,44 @@ function _coercive_abs_le_atol(
     return abs(res / 4) <= Rational{BigInt}(atol)
 end
 
-function _coercive_abs_le_atol(::Type{H}, l_u::BigFloat, q_u::BigFloat, atol::Real) where {H}
-    h_big = l_u / 2 + q_u / 4
-    isnan(h_big) && return false
-    isinf(atol) && return isfinite(h_big) || isinf(h_big)
-    return abs(h_big) <= BigFloat(atol)
-end
-
 function _coercive_abs_le_atol(::Type{H}, l_u, q_u, atol::Real) where {H}
     return abs(_coercive_field_from_sums(H, l_u, q_u)) <= atol
+end
+
+function _quadratic_float_field_accums(f::AbstractPBF{V,T}, caller::Symbol) where {V,T<:AbstractFloat}
+    deg = degree(f)
+    deg <= 2 || throw(
+        ArgumentError(
+            "$caller is only defined for quadratic pseudo-Boolean functions (degree <= 2); got degree $deg",
+        ),
+    )
+
+    field_acc = Dict{V,_FloatTermAccum}()
+    neg_half_quad_acc = Dict{V,_FloatTermAccum}()
+    has_lin = Set{V}()
+    vars = Set{V}()
+
+    for (ω, c) in f
+        len = length(ω)
+        if len == 1
+            u = only(ω)
+            push!(vars, u)
+            push!(has_lin, u)
+            field_acc[u] = _push_scaled_float!(get(field_acc, u, _FloatTermAccum()), c, -1)
+        elseif len == 2
+            u, v = ω
+            push!(vars, u)
+            push!(vars, v)
+            field_acc[u] = _push_scaled_float!(get(field_acc, u, _FloatTermAccum()), c, -2)
+            field_acc[v] = _push_scaled_float!(get(field_acc, v, _FloatTermAccum()), c, -2)
+            neg_half_quad_acc[u] =
+                _push_scaled_float!(get(neg_half_quad_acc, u, _FloatTermAccum()), -c, -1)
+            neg_half_quad_acc[v] =
+                _push_scaled_float!(get(neg_half_quad_acc, v, _FloatTermAccum()), -c, -1)
+        end
+    end
+
+    return (vars, has_lin, field_acc, neg_half_quad_acc)
 end
 
 function _quadratic_linear_and_row_sums(f::AbstractPBF{V,T}, caller::Symbol) where {V,T}
@@ -159,31 +417,29 @@ function _quadratic_linear_and_row_sums(f::AbstractPBF{V,T}, caller::Symbol) whe
         ),
     )
 
-    return _with_coercive_precision(T) do
-        A = _coercive_accum_type(T)
-        lin = Dict{V,A}()
-        quad_row_sum = Dict{V,A}()
-        vars = Set{V}()
+    A = _coercive_accum_type(T)
+    lin = Dict{V,A}()
+    quad_row_sum = Dict{V,A}()
+    vars = Set{V}()
 
-        for (ω, c) in f
-            len = length(ω)
-            if len == 1
-                u = only(ω)
-                push!(vars, u)
-                c_acc = convert(A, c)
-                lin[u] = get(lin, u, zero(A)) + c_acc
-            elseif len == 2
-                u, v = ω
-                push!(vars, u)
-                push!(vars, v)
-                c_acc = convert(A, c)
-                quad_row_sum[u] = get(quad_row_sum, u, zero(A)) + c_acc
-                quad_row_sum[v] = get(quad_row_sum, v, zero(A)) + c_acc
-            end
+    for (ω, c) in f
+        len = length(ω)
+        if len == 1
+            u = only(ω)
+            push!(vars, u)
+            c_acc = convert(A, c)
+            lin[u] = get(lin, u, zero(A)) + c_acc
+        elseif len == 2
+            u, v = ω
+            push!(vars, u)
+            push!(vars, v)
+            c_acc = convert(A, c)
+            quad_row_sum[u] = get(quad_row_sum, u, zero(A)) + c_acc
+            quad_row_sum[v] = get(quad_row_sum, v, zero(A)) + c_acc
         end
-
-        return (vars, lin, quad_row_sum)
     end
+
+    return (vars, lin, quad_row_sum)
 end
 
 function coercive_field(f::AbstractPBF{V,T}, x::V) where {V,T}
@@ -194,8 +450,20 @@ function coercive_field(f::AbstractPBF{V,T}, x::V) where {V,T}
         ),
     )
 
-    return _with_coercive_precision(T) do
-        H = typeof(zero(T) / 4)
+    H = typeof(zero(T) / 4)
+    if T <: AbstractFloat
+        ambient_prec = precision(BigFloat)
+        acc = _FloatTermAccum()
+        for (ω, c) in f
+            len = length(ω)
+            if len == 1 && x in ω
+                acc = _push_scaled_float!(acc, c, -1)
+            elseif len == 2 && x in ω
+                acc = _push_scaled_float!(acc, c, -2)
+            end
+        end
+        return _eval_float_accum(H, acc, ambient_prec)
+    else
         A = _coercive_accum_type(T)
         lin_x = zero(A)
         quad_x = zero(A)
@@ -214,10 +482,20 @@ function coercive_field(f::AbstractPBF{V,T}, x::V) where {V,T}
 end
 
 function coercive_fields(f::AbstractPBF{V,T}) where {V,T}
-    return _with_coercive_precision(T) do
+    H = typeof(zero(T) / 4)
+    if T <: AbstractFloat
+        ambient_prec = precision(BigFloat)
+        vars, _, field_acc, _ = _quadratic_float_field_accums(f, :coercive_fields)
+        out = Dict{V,H}()
+        sizehint!(out, length(vars))
+        for u in sort!(collect(vars); lt = varlt)
+            acc = get(field_acc, u, _FloatTermAccum())
+            out[u] = _eval_float_accum(H, acc, ambient_prec)
+        end
+        return out
+    else
         vars, lin, quad_row_sum = _quadratic_linear_and_row_sums(f, :coercive_fields)
         A = _coercive_accum_type(T)
-        H = typeof(zero(T) / 4)
         out = Dict{V,H}()
         sizehint!(out, length(vars))
 
@@ -234,7 +512,14 @@ end
 function is_gauge_invariant(f::AbstractPBF{V,T}; atol::Real = 0.0)::Bool where {V,T}
     (atol >= 0 && !isnan(atol)) ||
         throw(ArgumentError("atol must be nonnegative; got $atol"))
-    return _with_coercive_precision(T) do
+    if T <: AbstractFloat
+        vars, _, field_acc, _ = _quadratic_float_field_accums(f, :is_gauge_invariant)
+        for u in vars
+            acc = get(field_acc, u, _FloatTermAccum())
+            _float_accum_abs_le_atol(acc, atol) || return false
+        end
+        return true
+    else
         vars, lin, quad_row_sum = _quadratic_linear_and_row_sums(f, :is_gauge_invariant)
         A = _coercive_accum_type(T)
         H = typeof(zero(T) / 4)
@@ -253,31 +538,56 @@ function gauge_invariant_qubo!(
     f::F;
     keep_constant::Bool = true,
 ) where {V,T,F<:AbstractPBF{V,T}}
+    if T <: AbstractFloat
+        ambient_prec = precision(BigFloat)
+        _, has_lin, _, neg_half_quad_acc =
+            _quadratic_float_field_accums(f, :gauge_invariant_qubo!)
+        target_lin = Dict{V,T}()
+        sizehint!(target_lin, length(neg_half_quad_acc))
+        for u in sort!(collect(keys(neg_half_quad_acc)); lt = varlt)
+            target_lin[u] = _eval_float_accum(T, neg_half_quad_acc[u], ambient_prec)
+        end
+
+        if !keep_constant
+            f[nothing] = zero(T)
+        end
+
+        for u in has_lin
+            if !haskey(target_lin, u)
+                f[u] = zero(T)
+            end
+        end
+
+        for (u, c_u) in target_lin
+            f[u] = c_u
+        end
+
+        return f
+    end
+
     vars, lin, quad_row_sum = _quadratic_linear_and_row_sums(f, :gauge_invariant_qubo!)
     target_lin = Dict{V,T}()
     sizehint!(target_lin, length(quad_row_sum))
 
-    _with_coercive_precision(T) do
-        for u in sort!(collect(keys(quad_row_sum)); lt = varlt)
-            q_u = quad_row_sum[u]
-            if T <: Integer
-                iseven(q_u) || throw(
+    for u in sort!(collect(keys(quad_row_sum)); lt = varlt)
+        q_u = quad_row_sum[u]
+        if T <: Integer
+            iseven(q_u) || throw(
+                ArgumentError(
+                    "cannot represent half-integer gauge-invariant linear coefficient -($q_u)/2 for variable $u in integer PBF type $F",
+                ),
+            )
+            c_big = -div(q_u, 2)
+            if T !== BigInt && (c_big < BigInt(typemin(T)) || c_big > BigInt(typemax(T)))
+                throw(
                     ArgumentError(
-                        "cannot represent half-integer gauge-invariant linear coefficient -($q_u)/2 for variable $u in integer PBF type $F",
+                        "cannot represent gauge-invariant linear coefficient $c_big for variable $u in integer PBF type $F",
                     ),
                 )
-                c_big = -div(q_u, 2)
-                if T !== BigInt && (c_big < BigInt(typemin(T)) || c_big > BigInt(typemax(T)))
-                    throw(
-                        ArgumentError(
-                            "cannot represent gauge-invariant linear coefficient $c_big for variable $u in integer PBF type $F",
-                        ),
-                    )
-                end
-                target_lin[u] = convert(T, c_big)
-            else
-                target_lin[u] = convert(T, -(q_u / 2))
             end
+            target_lin[u] = convert(T, c_big)
+        else
+            target_lin[u] = convert(T, -(q_u / 2))
         end
     end
 

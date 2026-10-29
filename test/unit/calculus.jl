@@ -219,6 +219,38 @@ function test_calculus()
                     @test g_huge_quad[2] == -5e307
                     @test g_huge_quad[3] == -5e307
                     @test PBO.is_gauge_invariant(g_huge_quad)
+
+                    # BigFloat wide exponent span cancellation (2^2200 and 2^100000 vs 1)
+                    setprecision(BigFloat, 256) do
+                        F_bf = PBO.TermDictPBF{Int,BigFloat}
+                        for exp_hi in (2200, 100_000)
+                            A_bf = BigFloat(2)^exp_hi
+                            f_bf = F_bf(
+                                1 => -A_bf / 2,
+                                2 => -A_bf / 2,
+                                3 => -BigFloat(1) / 2,
+                                (1, 2) => A_bf,
+                                (1, 3) => BigFloat(1),
+                            )
+                            @test PBO.coercive_field(f_bf, 1) == BigFloat(0.25)
+                            @test precision(PBO.coercive_field(f_bf, 1)) == 256
+                            @test PBO.coercive_fields(f_bf) == Dict(
+                                1 => BigFloat(0.25),
+                                2 => BigFloat(0.0),
+                                3 => BigFloat(0.0),
+                            )
+                            @test !PBO.is_gauge_invariant(f_bf)
+                            @test !PBO.is_gauge_invariant(f_bf; atol = 1e-12)
+                            @test PBO.is_gauge_invariant(f_bf; atol = 0.25)
+                        end
+                    end
+
+                    # Exact comparison against high-precision Rational atol without premature rounding
+                    f_unit = F_f64(1 => 2.0) # h_1 = 1.0
+                    b_2200 = big(2)^2200
+                    @test !PBO.is_gauge_invariant(f_unit; atol = (b_2200 - 1) // b_2200)
+                    @test PBO.is_gauge_invariant(f_unit; atol = b_2200 // b_2200)
+                    @test PBO.is_gauge_invariant(f_unit; atol = (b_2200 + 1) // b_2200)
                 end
             end
         end
