@@ -14,13 +14,16 @@ function with Gaussian couplings ``J_{i, j} \sim \mathcal{N}(\mu, \sigma^2)``
 for ``1 \le i < j \le n``.
 
 When `normalize = true` (and ``n > 0``), each sampled coupling is scaled by
-``1 / \sqrt{n}`` so that the spin-glass ground-state energy per variable is
-intensive as ``n \to \infty``.
+``\alpha = 1 / \sqrt{n}`` (otherwise ``\alpha = 1``). For the centered
+Sherrington-Kirkpatrick ensemble (``\mu = 0``), ``\alpha = 1 / \sqrt{n}`` yields
+an intensive spin-glass ground-state energy per variable as ``n \to \infty``
+(whereas for ``\mu \neq 0`` the ferromagnetic/antiferromagnetic mean bias
+contributes ``\mathcal{O}(\alpha n \mu)`` per spin).
 
 When `gauge_invariant = true` (default), the zero-field Ising Hamiltonian
 
 ```math
-H_{\textrm{SK}}(\mathbf{s}) = \sum_{i = 1}^{n} \sum_{j = i + 1}^{n} J_{i, j} s_i s_j,
+H_{\textrm{SK}}(\mathbf{s}) = \sum_{i = 1}^{n} \sum_{j = i + 1}^{n} \alpha J_{i, j} s_i s_j,
 \qquad s_i = 2 x_i - 1 \in \{-1, +1\}
 ```
 
@@ -28,14 +31,19 @@ is expanded into the ``\mathbb{Z}_2`` gauge-invariant pseudo-Boolean form
 
 ```math
 f^{(n)}_{\textrm{SK}}(\mathbf{x})
-= \sum_{i = 1}^{n} \sum_{j = i + 1}^{n} J_{i, j} (4 x_i x_j - 2 x_i - 2 x_j + 1),
+= \sum_{i = 1}^{n} \sum_{j = i + 1}^{n} \alpha J_{i, j} (4 x_i x_j - 2 x_i - 2 x_j + 1),
 ```
 
 which has zero induced Ising coercive local fields (``h_i = 0`` for all ``i``).
 When `gauge_invariant = false`, the naive Boolean QUBO
-``\sum_{i < j} 4 J_{i, j} x_i x_j`` is returned without the linear/constant
-gauge-invariance terms, inducing ``\mathcal{O}(\sqrt{n})`` coercive local fields
-``h_i = \sum_{j \neq i} J_{i, j}``.
+``\sum_{i < j} 4 \alpha J_{i, j} x_i x_j`` is returned without the linear/constant
+gauge-invariance terms, inducing coercive local fields
+``h_i = \alpha \sum_{j \neq i} J_{i, j}`` with mean
+``\mathbb{E}[h_i] = \alpha (n - 1) \mu`` and standard deviation
+``\operatorname{sd}(h_i) = \alpha |\sigma| \sqrt{n - 1}`` (so for ``\mu = 0``,
+``\operatorname{sd}(h_i) = |\sigma| \sqrt{n - 1} = \mathcal{O}(\sqrt{n})`` when
+`normalize = false` and ``\operatorname{sd}(h_i) = |\sigma| \sqrt{(n - 1) / n} = \mathcal{O}(1)``
+relative to ``\mathcal{O}(1 / \sqrt{n})`` couplings when `normalize = true`).
 """
 function sherrington_kirkpatrick(
     rng,

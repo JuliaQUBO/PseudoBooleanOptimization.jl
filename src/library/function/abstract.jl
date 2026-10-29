@@ -90,6 +90,67 @@ function upperbound(f::F) where {V,T,F<:AbstractPBF{V,T}}
     return sum((c > zero(T) || isempty(ω)) ? c : zero(T) for (ω, c) in f; init = zero(T))
 end
 
+_coercive_accum_type(::Type{<:Integer}) = BigInt
+_coercive_accum_type(::Type{<:Rational}) = Rational{BigInt}
+_coercive_accum_type(::Type{<:AbstractFloat}) = BigFloat
+_coercive_accum_type(::Type{T}) where {T} = typeof(zero(T) + zero(T))
+
+function _with_coercive_precision(fn::Function, ::Type{T}) where {T}
+    if T <: AbstractFloat && T !== BigFloat
+        return setprecision(fn, BigFloat, 2112)
+    elseif T === BigFloat
+        return setprecision(fn, BigFloat, max(precision(BigFloat), 2112))
+    else
+        return fn()
+    end
+end
+
+function _coercive_field_from_sums(::Type{H}, l_u::BigInt, q_u::BigInt) where {H}
+    return convert(H, (2 * l_u + q_u) // 4)
+end
+
+function _coercive_field_from_sums(
+    ::Type{H},
+    l_u::Rational{BigInt},
+    q_u::Rational{BigInt},
+) where {H}
+    return convert(H, (2 * l_u + q_u) / 4)
+end
+
+function _coercive_field_from_sums(::Type{H}, l_u, q_u) where {H}
+    return convert(H, l_u / 2 + q_u / 4)
+end
+
+function _coercive_abs_le_atol(::Type{H}, l_u::BigInt, q_u::BigInt, atol::Real) where {H}
+    res = 2 * l_u + q_u
+    iszero(atol) && return iszero(res)
+    isinf(atol) && return true
+    return abs(res // 4) <= Rational{BigInt}(atol)
+end
+
+function _coercive_abs_le_atol(
+    ::Type{H},
+    l_u::Rational{BigInt},
+    q_u::Rational{BigInt},
+    atol::Real,
+) where {H}
+    res = 2 * l_u + q_u
+    iszero(atol) && return iszero(res)
+    isinf(atol) && return true
+    return abs(res / 4) <= Rational{BigInt}(atol)
+end
+
+function _coercive_abs_le_atol(::Type{H}, l_u::BigFloat, q_u::BigFloat, atol::Real) where {H}
+    h_big = l_u / 2 + q_u / 4
+    isnan(h_big) && return false
+    isinf(atol) && return isfinite(h_big) || isinf(h_big)
+    return abs(h_big) <= BigFloat(atol)
+end
+
+function _coercive_abs_le_atol(::Type{H}, l_u, q_u, atol::Real) where {H}
+    return abs(_coercive_field_from_sums(H, l_u, q_u)) <= atol
+end
+
 function _quadratic_linear_and_row_sums(f::AbstractPBF{V,T}, caller::Symbol) where {V,T}
     deg = degree(f)
     deg <= 2 || throw(
@@ -98,26 +159,31 @@ function _quadratic_linear_and_row_sums(f::AbstractPBF{V,T}, caller::Symbol) whe
         ),
     )
 
-    lin = Dict{V,T}()
-    quad_row_sum = Dict{V,T}()
-    vars = Set{V}()
+    return _with_coercive_precision(T) do
+        A = _coercive_accum_type(T)
+        lin = Dict{V,A}()
+        quad_row_sum = Dict{V,A}()
+        vars = Set{V}()
 
-    for (ω, c) in f
-        len = length(ω)
-        if len == 1
-            u = only(ω)
-            push!(vars, u)
-            lin[u] = get(lin, u, zero(T)) + c
-        elseif len == 2
-            u, v = ω
-            push!(vars, u)
-            push!(vars, v)
-            quad_row_sum[u] = get(quad_row_sum, u, zero(T)) + c
-            quad_row_sum[v] = get(quad_row_sum, v, zero(T)) + c
+        for (ω, c) in f
+            len = length(ω)
+            if len == 1
+                u = only(ω)
+                push!(vars, u)
+                c_acc = convert(A, c)
+                lin[u] = get(lin, u, zero(A)) + c_acc
+            elseif len == 2
+                u, v = ω
+                push!(vars, u)
+                push!(vars, v)
+                c_acc = convert(A, c)
+                quad_row_sum[u] = get(quad_row_sum, u, zero(A)) + c_acc
+                quad_row_sum[v] = get(quad_row_sum, v, zero(A)) + c_acc
+            end
         end
-    end
 
-    return (vars, lin, quad_row_sum)
+        return (vars, lin, quad_row_sum)
+    end
 end
 
 function coercive_field(f::AbstractPBF{V,T}, x::V) where {V,T}
@@ -128,54 +194,59 @@ function coercive_field(f::AbstractPBF{V,T}, x::V) where {V,T}
         ),
     )
 
-    H = typeof(zero(T) / 4)
-    lin_x = zero(T)
-    quad_x = zero(T)
+    return _with_coercive_precision(T) do
+        H = typeof(zero(T) / 4)
+        A = _coercive_accum_type(T)
+        lin_x = zero(A)
+        quad_x = zero(A)
 
-    for (ω, c) in f
-        len = length(ω)
-        if len == 1 && x in ω
-            lin_x += c
-        elseif len == 2 && x in ω
-            quad_x += c
+        for (ω, c) in f
+            len = length(ω)
+            if len == 1 && x in ω
+                lin_x += convert(A, c)
+            elseif len == 2 && x in ω
+                quad_x += convert(A, c)
+            end
         end
-    end
 
-    return (2 * H(lin_x) + H(quad_x)) / 4
+        return _coercive_field_from_sums(H, lin_x, quad_x)
+    end
 end
 
 function coercive_fields(f::AbstractPBF{V,T}) where {V,T}
-    vars, lin, quad_row_sum = _quadratic_linear_and_row_sums(f, :coercive_fields)
-    H = typeof(zero(T) / 4)
-    out = Dict{V,H}()
-    sizehint!(out, length(vars))
+    return _with_coercive_precision(T) do
+        vars, lin, quad_row_sum = _quadratic_linear_and_row_sums(f, :coercive_fields)
+        A = _coercive_accum_type(T)
+        H = typeof(zero(T) / 4)
+        out = Dict{V,H}()
+        sizehint!(out, length(vars))
 
-    for u in sort!(collect(vars); lt = varlt)
-        l_u = get(lin, u, zero(T))
-        q_u = get(quad_row_sum, u, zero(T))
-        out[u] = (2 * H(l_u) + H(q_u)) / 4
+        for u in sort!(collect(vars); lt = varlt)
+            l_u = get(lin, u, zero(A))
+            q_u = get(quad_row_sum, u, zero(A))
+            out[u] = _coercive_field_from_sums(H, l_u, q_u)
+        end
+
+        return out
     end
-
-    return out
 end
 
 function is_gauge_invariant(f::AbstractPBF{V,T}; atol::Real = 0.0)::Bool where {V,T}
     (atol >= 0 && !isnan(atol)) ||
         throw(ArgumentError("atol must be nonnegative; got $atol"))
-    vars, lin, quad_row_sum = _quadratic_linear_and_row_sums(f, :is_gauge_invariant)
-    H = typeof(zero(T) / 4)
+    return _with_coercive_precision(T) do
+        vars, lin, quad_row_sum = _quadratic_linear_and_row_sums(f, :is_gauge_invariant)
+        A = _coercive_accum_type(T)
+        H = typeof(zero(T) / 4)
 
-    for u in vars
-        l_u = get(lin, u, zero(T))
-        q_u = get(quad_row_sum, u, zero(T))
-        if iszero(atol) && T <: Union{Integer,Rational}
-            iszero(2 * l_u + q_u) || return false
-        else
-            abs((2 * H(l_u) + H(q_u)) / 4) <= atol || return false
+        for u in vars
+            l_u = get(lin, u, zero(A))
+            q_u = get(quad_row_sum, u, zero(A))
+            _coercive_abs_le_atol(H, l_u, q_u, atol) || return false
         end
-    end
 
-    return true
+        return true
+    end
 end
 
 function gauge_invariant_qubo!(
@@ -183,15 +254,30 @@ function gauge_invariant_qubo!(
     keep_constant::Bool = true,
 ) where {V,T,F<:AbstractPBF{V,T}}
     vars, lin, quad_row_sum = _quadratic_linear_and_row_sums(f, :gauge_invariant_qubo!)
+    target_lin = Dict{V,T}()
+    sizehint!(target_lin, length(quad_row_sum))
 
-    if T <: Integer
+    _with_coercive_precision(T) do
         for u in sort!(collect(keys(quad_row_sum)); lt = varlt)
             q_u = quad_row_sum[u]
-            iseven(q_u) || throw(
-                ArgumentError(
-                    "cannot represent half-integer gauge-invariant linear coefficient -($q_u)/2 for variable $u in integer PBF type $F",
-                ),
-            )
+            if T <: Integer
+                iseven(q_u) || throw(
+                    ArgumentError(
+                        "cannot represent half-integer gauge-invariant linear coefficient -($q_u)/2 for variable $u in integer PBF type $F",
+                    ),
+                )
+                c_big = -div(q_u, 2)
+                if T !== BigInt && (c_big < BigInt(typemin(T)) || c_big > BigInt(typemax(T)))
+                    throw(
+                        ArgumentError(
+                            "cannot represent gauge-invariant linear coefficient $c_big for variable $u in integer PBF type $F",
+                        ),
+                    )
+                end
+                target_lin[u] = convert(T, c_big)
+            else
+                target_lin[u] = convert(T, -(q_u / 2))
+            end
         end
     end
 
@@ -200,13 +286,13 @@ function gauge_invariant_qubo!(
     end
 
     for u in keys(lin)
-        if !haskey(quad_row_sum, u)
+        if !haskey(target_lin, u)
             f[u] = zero(T)
         end
     end
 
-    for (u, q_u) in quad_row_sum
-        f[u] = T <: Integer ? -div(q_u, 2) : convert(T, -q_u / 2)
+    for (u, c_u) in target_lin
+        f[u] = c_u
     end
 
     return f

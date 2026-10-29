@@ -138,6 +138,61 @@ function test_sherrington_kirkpatrick_synthesis()
             f_global, sol_global = PBO.sherrington_kirkpatrick(F, 3; normalize = true)
             @test isempty(sol_global)
             @test PBO.is_gauge_invariant(f_global; atol = 1e-12)
+
+            # Deterministic 2-spin analytical oracle (μ = 1.0, σ = 0.0 => J_{1,2} = 1.0):
+            # Gauge-invariant SK must equal 4 x_1 x_2 - 2 x_1 - 2 x_2 + 1 with energies (1, -1, -1, 1)
+            x1 = PBO.varmap(V, 1)
+            x2 = PBO.varmap(V, 2)
+            f_det_gauge, _ = PBO.sherrington_kirkpatrick(
+                Random.MersenneTwister(7),
+                F,
+                2;
+                μ = 1.0,
+                σ = 0.0,
+                normalize = false,
+                gauge_invariant = true,
+            )
+            @test f_det_gauge == F(1.0, x1 => -2.0, x2 => -2.0, [x1, x2] => 4.0)
+            @test f_det_gauge(Dict(x1 => 0, x2 => 0))[nothing] == 1.0
+            @test f_det_gauge(Dict(x1 => 1, x2 => 0))[nothing] == -1.0
+            @test f_det_gauge(Dict(x1 => 0, x2 => 1))[nothing] == -1.0
+            @test f_det_gauge(Dict(x1 => 1, x2 => 1))[nothing] == 1.0
+
+            # Naive Boolean SK with μ = 1.0, σ = 0.0 must equal 4 x_1 x_2 with energies (0, 0, 0, 4)
+            f_det_naive, _ = PBO.sherrington_kirkpatrick(
+                Random.MersenneTwister(7),
+                F,
+                2;
+                μ = 1.0,
+                σ = 0.0,
+                normalize = false,
+                gauge_invariant = false,
+            )
+            @test f_det_naive == F([x1, x2] => 4.0)
+            @test f_det_naive(Dict(x1 => 0, x2 => 0))[nothing] == 0.0
+            @test f_det_naive(Dict(x1 => 1, x2 => 0))[nothing] == 0.0
+            @test f_det_naive(Dict(x1 => 0, x2 => 1))[nothing] == 0.0
+            @test f_det_naive(Dict(x1 => 1, x2 => 1))[nothing] == 4.0
+
+            # Normalized 2-spin SK with μ = 1.0, σ = 0.0 scales J_{1,2} by 1/sqrt(2)
+            α2 = inv(sqrt(2.0))
+            f_det_norm, _ = PBO.sherrington_kirkpatrick(
+                Random.MersenneTwister(7),
+                F,
+                2;
+                μ = 1.0,
+                σ = 0.0,
+                normalize = true,
+                gauge_invariant = true,
+            )
+            @test isapprox(f_det_norm[nothing], α2; atol = 1e-12)
+            @test isapprox(f_det_norm[x1], -2.0 * α2; atol = 1e-12)
+            @test isapprox(f_det_norm[x2], -2.0 * α2; atol = 1e-12)
+            @test isapprox(f_det_norm[x1, x2], 4.0 * α2; atol = 1e-12)
+            @test isapprox(f_det_norm(Dict(x1 => 0, x2 => 0))[nothing], α2; atol = 1e-12)
+            @test isapprox(f_det_norm(Dict(x1 => 1, x2 => 0))[nothing], -α2; atol = 1e-12)
+            @test isapprox(f_det_norm(Dict(x1 => 0, x2 => 1))[nothing], -α2; atol = 1e-12)
+            @test isapprox(f_det_norm(Dict(x1 => 1, x2 => 1))[nothing], α2; atol = 1e-12)
         end
     end
 

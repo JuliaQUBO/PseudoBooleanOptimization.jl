@@ -168,6 +168,57 @@ function test_calculus()
                     @test g_rat[1] == -3//2
                     @test g_rat[2] == -3//2
                     @test PBO.coercive_field(g_rat, 1) == 0//1
+
+                    # Overflow-safe integer row sums and invariance checks
+                    f_typemin = F_int(1 => typemin(Int))
+                    @test !PBO.is_gauge_invariant(f_typemin)
+                    @test !PBO.is_gauge_invariant(f_typemin; atol = 1.0)
+                    @test PBO.coercive_field(f_typemin, 1) == Float64(BigInt(typemin(Int)) // 2)
+                    @test PBO.coercive_fields(f_typemin)[1] == Float64(BigInt(typemin(Int)) // 2)
+
+                    # Int8 row sum overflow (120 + 8 = 128) where -128/2 = -64 is representable in Int8
+                    F_i8 = PBO.TermDictPBF{Int,Int8}
+                    f_i8_rep = F_i8((1, 2) => Int8(120), (1, 3) => Int8(8))
+                    @test PBO.coercive_field(f_i8_rep, 1) == 32.0
+                    @test PBO.coercive_fields(f_i8_rep)[1] == 32.0
+                    g_i8 = PBO.gauge_invariant_qubo(f_i8_rep)
+                    @test g_i8[1] == Int8(-64)
+                    @test g_i8[2] == Int8(-60)
+                    @test g_i8[3] == Int8(-4)
+                    @test PBO.is_gauge_invariant(g_i8)
+
+                    # Int8 row sum whose projected linear term (-130) is outside typemin(Int8):typemax(Int8)
+                    f_i8_unrep = F_i8(1 => Int8(7), (1, 2) => Int8(120), (1, 3) => Int8(120), (1, 4) => Int8(20))
+                    @test_throws ArgumentError PBO.gauge_invariant_qubo!(f_i8_unrep)
+                    @test f_i8_unrep[1] == Int8(7)
+
+                    # Precision preservation for 64-bit integers beyond Float64 53-bit significand
+                    A = Int64(2)^53
+                    F_i64 = PBO.TermDictPBF{Int,Int64}
+                    f_prec = F_i64(1 => A, 2 => A, (1, 2) => -2 * A + 1)
+                    @test PBO.coercive_field(f_prec, 1) == 0.25
+                    @test PBO.coercive_field(f_prec, 2) == 0.25
+                    @test PBO.coercive_fields(f_prec) == Dict(1 => 0.25, 2 => 0.25)
+                    @test !PBO.is_gauge_invariant(f_prec)
+                    @test !PBO.is_gauge_invariant(f_prec; atol = 1e-12)
+                    @test PBO.is_gauge_invariant(f_prec; atol = 0.25)
+
+                    # Float64 large coefficients that would overflow 2*l_u or intermediate row sum in Float64
+                    F_f64 = PBO.TermDictPBF{Int,Float64}
+                    f_huge_lin = F_f64(1 => 1e308)
+                    @test PBO.coercive_field(f_huge_lin, 1) == 5e307
+                    @test PBO.coercive_fields(f_huge_lin) == Dict(1 => 5e307)
+                    @test !PBO.is_gauge_invariant(f_huge_lin; atol = 1e307)
+                    @test PBO.is_gauge_invariant(f_huge_lin; atol = 6e307)
+
+                    f_huge_quad = F_f64((1, 2) => 1e308, (1, 3) => 1e308)
+                    @test PBO.coercive_field(f_huge_quad, 1) == 5e307
+                    @test PBO.coercive_fields(f_huge_quad)[1] == 5e307
+                    g_huge_quad = PBO.gauge_invariant_qubo(f_huge_quad)
+                    @test g_huge_quad[1] == -1e308
+                    @test g_huge_quad[2] == -5e307
+                    @test g_huge_quad[3] == -5e307
+                    @test PBO.is_gauge_invariant(g_huge_quad)
                 end
             end
         end
