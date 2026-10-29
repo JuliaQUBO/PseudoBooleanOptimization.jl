@@ -92,16 +92,46 @@ end
 
 const _COERCIVE_CLUSTER_SPAN_LIMIT = 65536
 
+struct _DyadicTerm
+    m::BigInt
+    e::Int
+end
+
+function _canonical_dyadic(m::BigInt, e::Int)
+    iszero(m) && return nothing
+    tz = trailing_zeros(m)
+    return _DyadicTerm(m >> tz, e + tz)
+end
+
+function _dyadic_from_float(x::AbstractFloat, shift::Int = 0)
+    iszero(x) && return nothing
+    p = precision(x)
+    ex = exponent(x)
+    m_raw = BigInt(ldexp(x, p - 1 - ex))
+    return _canonical_dyadic(m_raw, ex - (p - 1) + shift)
+end
+
+_dyadic_lsb(t::_DyadicTerm) = t.e
+_dyadic_msb(t::_DyadicTerm) = t.e + ndigits(abs(t.m), base = 2) - 1
+
+function _dyadic_add(a::_DyadicTerm, b::_DyadicTerm)
+    if a.e >= b.e
+        return _canonical_dyadic((a.m << (a.e - b.e)) + b.m, b.e)
+    else
+        return _canonical_dyadic(a.m + (b.m << (b.e - a.e)), a.e)
+    end
+end
+
 struct _FloatTermAccum
-    terms::Vector{BigFloat}
+    terms::Vector{_DyadicTerm}
     has_nan::Bool
     pos_inf::Bool
     neg_inf::Bool
 end
 
-_FloatTermAccum() = _FloatTermAccum(BigFloat[], false, false, false)
+_FloatTermAccum() = _FloatTermAccum(_DyadicTerm[], false, false, false)
 
-function _push_scaled_float!(acc::_FloatTermAccum, c::Real, shift::Int)
+function _push_scaled_float!(acc::_FloatTermAccum, c::AbstractFloat, shift::Int)
     if isnan(c)
         return _FloatTermAccum(acc.terms, true, acc.pos_inf, acc.neg_inf)
     elseif isinf(c)
@@ -114,91 +144,72 @@ function _push_scaled_float!(acc::_FloatTermAccum, c::Real, shift::Int)
     elseif iszero(c)
         return acc
     else
-        prec = max(64, precision(c) + 16)
-        bf = setprecision(BigFloat, prec) do
-            ldexp(BigFloat(c), shift)
-        end
-        push!(acc.terms, bf)
+        dt = _dyadic_from_float(c, shift)
+        dt !== nothing && push!(acc.terms, dt)
         return acc
     end
 end
 
-function _exact_float_clusters(acc::_FloatTermAccum, min_merge_span::Int = _COERCIVE_CLUSTER_SPAN_LIMIT)
-    if acc.has_nan || (acc.pos_inf && acc.neg_inf)
-        return (:nan, BigFloat[])
-    elseif acc.pos_inf
-        return (:pos_inf, BigFloat[])
-    elseif acc.neg_inf
-        return (:neg_inf, BigFloat[])
-    elseif isempty(acc.terms)
-        return (:finite, BigFloat[])
+function _reduce_dyadic_terms(
+    terms::Vector{_DyadicTerm},
+    min_gap::Int = _COERCIVE_CLUSTER_SPAN_LIMIT,
+)
+    isempty(terms) && return _DyadicTerm[]
+
+    by_e = Dict{Int,BigInt}()
+    for t in terms
+        by_e[t.e] = get(by_e, t.e, zero(BigInt)) + t.m
     end
 
-    sorted = sort(acc.terms; by = exponent, rev = true)
-    raw_clusters = BigFloat[]
-    n = length(sorted)
-    i = 1
-    while i <= n
-        j = i
-        cluster_msb = exponent(sorted[i])
-        cluster_lsb = exponent(sorted[i]) - precision(sorted[i])
-        while j < n
-            next_msb = exponent(sorted[j + 1])
-            next_lsb = next_msb - precision(sorted[j + 1])
-            if cluster_msb - next_lsb <= min_merge_span
-                cluster_msb = max(cluster_msb, next_msb)
-                cluster_lsb = min(cluster_lsb, next_lsb)
-                j += 1
-            else
+    work = _DyadicTerm[]
+    sizehint!(work, length(by_e))
+    for (e, m) in by_e
+        dt = _canonical_dyadic(m, e)
+        dt !== nothing && push!(work, dt)
+    end
+
+    while length(work) >= 2
+        sort!(work; by = t -> (_dyadic_msb(t), t.e), rev = true)
+        merged_any = false
+        for i = 1:(length(work) - 1)
+            a = work[i]
+            b = work[i + 1]
+            if _dyadic_lsb(a) - _dyadic_msb(b) <= min_gap
+                c = _dyadic_add(a, b)
+                deleteat!(work, (i, i + 1))
+                c !== nothing && push!(work, c)
+                merged_any = true
                 break
             end
         end
-        carry_bits = ceil(Int, log2(max(2, j - i + 2))) + 32
-        work_prec = max(256, cluster_msb - cluster_lsb + carry_bits)
-        c_sum = setprecision(BigFloat, work_prec) do
-            s = zero(BigFloat)
-            for k = i:j
-                s += sorted[k]
-            end
-            return s
-        end
-        if !iszero(c_sum)
-            push!(raw_clusters, c_sum)
-        end
-        i = j + 1
+        merged_any || break
     end
 
-    isempty(raw_clusters) && return (:finite, BigFloat[])
+    sort!(work; by = t -> (_dyadic_msb(t), t.e), rev = true)
+    return work
+end
 
-    # Second pass: merge adjacent non-zero clusters whose bit span is within min_merge_span
-    merged = BigFloat[raw_clusters[1]]
-    for k = 2:length(raw_clusters)
-        prev = merged[end]
-        curr = raw_clusters[k]
-        msb = max(exponent(prev), exponent(curr))
-        lsb = min(exponent(prev) - precision(prev), exponent(curr) - precision(curr))
-        if msb - lsb <= min_merge_span
-            work_prec = max(256, msb - lsb + 64)
-            s = setprecision(BigFloat, work_prec) do
-                BigFloat(prev) + BigFloat(curr)
-            end
-            if iszero(s)
-                pop!(merged)
-            else
-                merged[end] = s
-            end
-        else
-            push!(merged, curr)
-        end
+function _exact_float_clusters(
+    acc::_FloatTermAccum,
+    min_gap::Int = _COERCIVE_CLUSTER_SPAN_LIMIT,
+)
+    if acc.has_nan || (acc.pos_inf && acc.neg_inf)
+        return (:nan, _DyadicTerm[])
+    elseif acc.pos_inf
+        return (:pos_inf, _DyadicTerm[])
+    elseif acc.neg_inf
+        return (:neg_inf, _DyadicTerm[])
+    elseif isempty(acc.terms)
+        return (:finite, _DyadicTerm[])
+    else
+        return (:finite, _reduce_dyadic_terms(acc.terms, min_gap))
     end
-
-    return (:finite, merged)
 end
 
 function _eval_float_accum(::Type{H}, acc::_FloatTermAccum, ambient_bf_prec::Int) where {H}
     target_prec = H === BigFloat ? ambient_bf_prec : max(256, precision(H) + 64)
-    merge_span = max(_COERCIVE_CLUSTER_SPAN_LIMIT, 2 * target_prec + 256)
-    status, clusters = _exact_float_clusters(acc, merge_span)
+    min_gap = max(_COERCIVE_CLUSTER_SPAN_LIMIT, 2 * target_prec + 256)
+    status, clusters = _exact_float_clusters(acc, min_gap)
     if status === :nan
         return H === BigFloat ? setprecision(() -> BigFloat(NaN), BigFloat, ambient_bf_prec) : convert(H, NaN)
     elseif status === :pos_inf
@@ -207,20 +218,17 @@ function _eval_float_accum(::Type{H}, acc::_FloatTermAccum, ambient_bf_prec::Int
         return H === BigFloat ? setprecision(() -> BigFloat(-Inf), BigFloat, ambient_bf_prec) : convert(H, -Inf)
     elseif isempty(clusters)
         return H === BigFloat ? setprecision(() -> zero(BigFloat), BigFloat, ambient_bf_prec) : zero(H)
-    elseif length(clusters) == 1
-        c1 = clusters[1]
-        if H === BigFloat
-            return setprecision(() -> BigFloat(c1), BigFloat, ambient_bf_prec)
-        else
-            return convert(H, c1)
-        end
     else
         c1 = clusters[1]
-        c2 = clusters[2]
-        sticky_prec = max(precision(c1), target_prec) + 64
-        adjusted = setprecision(BigFloat, sticky_prec) do
-            base = BigFloat(c1)
-            return c2 > 0 ? nextfloat(base) : prevfloat(base)
+        c1_bits = ndigits(abs(c1.m), base = 2)
+        work_prec = max(256, c1_bits, target_prec) + 64
+        adjusted = setprecision(BigFloat, work_prec) do
+            base = ldexp(BigFloat(c1.m), c1.e)
+            if length(clusters) >= 2
+                return clusters[2].m > 0 ? nextfloat(base) : prevfloat(base)
+            else
+                return base
+            end
         end
         if H === BigFloat
             return setprecision(() -> BigFloat(adjusted), BigFloat, ambient_bf_prec)
@@ -231,103 +239,46 @@ function _eval_float_accum(::Type{H}, acc::_FloatTermAccum, ambient_bf_prec::Int
 end
 
 function _float_accum_abs_le_atol(acc::_FloatTermAccum, atol::Real)
-    status, clusters = _exact_float_clusters(acc)
+    status, clusters = _exact_float_clusters(acc, _COERCIVE_CLUSTER_SPAN_LIMIT)
     status === :nan && return false
     isinf(atol) && return true
     (status === :pos_inf || status === :neg_inf) && return false
     isempty(clusters) && return true
     iszero(atol) && return false
 
+    s1 = sign(clusters[1].m)
+    diff_terms = _DyadicTerm[]
+    sizehint!(diff_terms, length(clusters) + 1)
+
     if atol isa Rational
         atol_rat = Rational{BigInt}(atol)
         p = numerator(atol_rat)
         q = denominator(atol_rat)
-        p_bits = ndigits(p, base = 2)
-        q_bits = ndigits(q, base = 2)
-        # Compare |q * sum(clusters)| <= p exactly
-        scaled_acc = _FloatTermAccum()
-        for c in clusters
-            w_prec = max(256, precision(c) + q_bits + 64)
-            qc = setprecision(BigFloat, w_prec) do
-                BigFloat(c) * BigFloat(q)
-            end
-            push!(scaled_acc.terms, qc)
+        for t in clusters
+            dt = _canonical_dyadic(s1 * q * t.m, t.e)
+            dt !== nothing && push!(diff_terms, dt)
         end
-        _, q_clusters = _exact_float_clusters(
-            scaled_acc,
-            max(_COERCIVE_CLUSTER_SPAN_LIMIT, p_bits + q_bits + 256),
-        )
-        isempty(q_clusters) && return true
-        c1 = q_clusters[1]
-        s1 = sign(c1)
-        abs_c1_exp = exponent(c1)
-        if abs_c1_exp + 2 < p_bits
-            return true
-        elseif abs_c1_exp - 2 > p_bits
-            return false
-        end
-        cmp_prec = max(256, precision(c1) + p_bits + 64)
-        return setprecision(BigFloat, cmp_prec) do
-            abs_c1 = abs(BigFloat(c1))
-            p_bf = BigFloat(p)
-            if abs_c1 < p_bf
-                return true
-            elseif abs_c1 > p_bf
-                return false
-            else
-                return length(q_clusters) == 1 || sign(q_clusters[2]) != s1
-            end
-        end
+        dt_p = _canonical_dyadic(-p, 0)
+        dt_p !== nothing && push!(diff_terms, dt_p)
     elseif atol isa Integer
         p = BigInt(atol)
-        p_bits = ndigits(p, base = 2)
-        _, m_clusters = _exact_float_clusters(
-            acc,
-            max(_COERCIVE_CLUSTER_SPAN_LIMIT, p_bits + 256),
-        )
-        isempty(m_clusters) && return true
-        c1 = m_clusters[1]
-        s1 = sign(c1)
-        abs_c1_exp = exponent(c1)
-        if abs_c1_exp + 2 < p_bits
-            return true
-        elseif abs_c1_exp - 2 > p_bits
-            return false
+        for t in clusters
+            push!(diff_terms, _DyadicTerm(s1 * t.m, t.e))
         end
-        cmp_prec = max(256, precision(c1) + p_bits + 64)
-        return setprecision(BigFloat, cmp_prec) do
-            abs_c1 = abs(BigFloat(c1))
-            p_bf = BigFloat(p)
-            if abs_c1 < p_bf
-                return true
-            elseif abs_c1 > p_bf
-                return false
-            else
-                return length(m_clusters) == 1 || sign(m_clusters[2]) != s1
-            end
+        dt_p = _canonical_dyadic(-p, 0)
+        dt_p !== nothing && push!(diff_terms, dt_p)
+    elseif atol isa AbstractFloat
+        for t in clusters
+            push!(diff_terms, _DyadicTerm(s1 * t.m, t.e))
         end
+        dt_a = _dyadic_from_float(atol)
+        dt_a !== nothing && push!(diff_terms, _DyadicTerm(-dt_a.m, dt_a.e))
     else
-        atol_prec = atol isa AbstractFloat ? precision(atol) : 256
-        _, m_clusters = _exact_float_clusters(
-            acc,
-            max(_COERCIVE_CLUSTER_SPAN_LIMIT, atol_prec + 256),
-        )
-        isempty(m_clusters) && return true
-        c1 = m_clusters[1]
-        s1 = sign(c1)
-        cmp_prec = max(256, precision(c1) + atol_prec + 64)
-        return setprecision(BigFloat, cmp_prec) do
-            abs_c1 = abs(BigFloat(c1))
-            a_bf = BigFloat(atol)
-            if abs_c1 < a_bf
-                return true
-            elseif abs_c1 > a_bf
-                return false
-            else
-                return length(m_clusters) == 1 || sign(m_clusters[2]) != s1
-            end
-        end
+        return _float_accum_abs_le_atol(acc, Rational{BigInt}(atol))
     end
+
+    diff_reduced = _reduce_dyadic_terms(diff_terms, _COERCIVE_CLUSTER_SPAN_LIMIT)
+    return isempty(diff_reduced) || diff_reduced[1].m < 0
 end
 
 _coercive_accum_type(::Type{<:Integer}) = BigInt

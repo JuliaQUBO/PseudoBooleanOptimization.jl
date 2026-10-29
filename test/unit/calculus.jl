@@ -243,6 +243,26 @@ function test_calculus()
                             @test !PBO.is_gauge_invariant(f_bf; atol = 1e-12)
                             @test PBO.is_gauge_invariant(f_bf; atol = 0.25)
                         end
+
+                        # Cluster-boundary cancellation leaving overlapping lower clusters
+                        A_cb = BigFloat(2)^65_264
+                        f_cb = F_bf(
+                            1 => 2 * A_cb,
+                            2 => 2 * A_cb,
+                            3 => BigFloat(-2),
+                            4 => BigFloat(1.5),
+                            5 => BigFloat(1.5),
+                            6 => BigFloat(1.5),
+                            (1, 2) => -4 * A_cb,
+                            (1, 3) => BigFloat(4),
+                            (1, 4) => BigFloat(-3),
+                            (1, 5) => BigFloat(-3),
+                            (1, 6) => BigFloat(-3),
+                        )
+                        @test PBO.coercive_field(f_cb, 1) == BigFloat(-1.25)
+                        @test PBO.coercive_fields(f_cb)[1] == BigFloat(-1.25)
+                        @test !PBO.is_gauge_invariant(f_cb; atol = 1)
+                        @test PBO.is_gauge_invariant(f_cb; atol = 1.25)
                     end
 
                     # Exact comparison against high-precision Rational atol without premature rounding
