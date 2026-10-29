@@ -189,3 +189,74 @@ function upperbound end
 Given ``f : \mathbb{B}^{n} \to [a, b]``, returns the approximate extrema for the tightest ``[l, u] \supset [a, b]``.
 """
 function bounds end
+
+@doc raw"""
+    coercive_field(f::AbstractPBF{V,T}, x::V) where {V,T}
+
+Computes the induced Ising coercive local field ``h_x`` on variable ``x`` for a
+quadratic pseudo-Boolean function (``\deg(f) \le 2``) under the spin
+transformation ``x_i = (s_i + 1) / 2`` with ``s_i \in \{-1, +1\}``:
+
+```math
+h_x = \frac{1}{2} c_{\{x\}} + \frac{1}{4} \sum_{y \neq x} c_{\{x, y\}}.
+```
+
+Throws an `ArgumentError` if ``\deg(f) > 2``.
+"""
+function coercive_field end
+
+@doc raw"""
+    coercive_fields(f::AbstractPBF{V,T}) where {V,T}
+
+Returns a dictionary mapping each variable ``x \in \mathrm{variables}(f)`` of a
+quadratic pseudo-Boolean function (``\deg(f) \le 2``) to its induced Ising
+coercive local field [`coercive_field`](@ref) ``h_x = \frac{1}{2} c_{\{x\}} + \frac{1}{4} \sum_{y \neq x} c_{\{x, y\}}``.
+
+Throws an `ArgumentError` if ``\deg(f) > 2``.
+"""
+function coercive_fields end
+
+@doc raw"""
+    is_gauge_invariant(f::AbstractPBF{V,T}; atol::Real = 0.0)::Bool where {V,T}
+
+Checks whether a quadratic pseudo-Boolean function (``\deg(f) \le 2``) is
+globally ``\mathbb{Z}_2`` bit-flip gauge invariant, i.e., ``f(\mathbf{1} - \mathbf{x}) = f(\mathbf{x})``
+for all ``\mathbf{x} \in \mathbb{B}^n``, which holds if and only if every induced
+Ising coercive local field vanishes (``|h_i| \le \mathrm{atol}`` for all ``i``).
+
+Throws an `ArgumentError` if ``\deg(f) > 2`` or ``\mathrm{atol} < 0``.
+"""
+function is_gauge_invariant end
+
+@doc raw"""
+    gauge_invariant_qubo(f::AbstractPBF{V,T}; keep_constant::Bool = true) where {V,T}
+
+Projects a quadratic pseudo-Boolean function (``\deg(f) \le 2``) onto its
+zero-field ``\mathbb{Z}_2`` gauge-invariant QUBO form[^Boettcher2019] by setting
+each linear coefficient to
+
+```math
+c_{\{i\}}^{\mathrm{gauge}} = -\frac{1}{2} \sum_{j \neq i} c_{\{i, j\}},
+```
+
+so that the non-constant interaction takes the bit-flip symmetric form
+
+```math
+\sum_{i < j} c_{\{i, j\}} \left(x_i x_j - \frac{1}{2} x_i - \frac{1}{2} x_j\right)
+= -\frac{1}{2} \sum_{i < j} c_{\{i, j\}} (x_i + x_j - 2 x_i x_j),
+```
+
+with ``h_i = 0`` for every variable. When `keep_constant = false`, the constant
+term ``c_\varnothing`` is also zeroed so that ``f(\mathbf{0}) = f(\mathbf{1}) = 0``.
+
+[^Boettcher2019]:
+    Stefan Boettcher, **Analysis of the relation between quadratic unconstrained binary optimization (QUBO) and the spin-glass ground-state problem**, *Physical Review Research* **1**, 033142, 2019 [{doi}](https://doi.org/10.1103/PhysRevResearch.1.033142)
+"""
+function gauge_invariant_qubo end
+
+@doc raw"""
+    gauge_invariant_qubo!(f::AbstractPBF{V,T}; keep_constant::Bool = true) where {V,T}
+
+In-place version of [`gauge_invariant_qubo`](@ref).
+"""
+function gauge_invariant_qubo! end

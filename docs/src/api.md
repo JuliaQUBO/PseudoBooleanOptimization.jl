@@ -47,6 +47,11 @@ PBO.maxgap
 PBO.derivative
 PBO.gradient
 PBO.residual
+PBO.coercive_field
+PBO.coercive_fields
+PBO.is_gauge_invariant
+PBO.gauge_invariant_qubo
+PBO.gauge_invariant_qubo!
 ```
 
 ```@docs
