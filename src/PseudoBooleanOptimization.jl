@@ -8,6 +8,7 @@ using MutableArithmetics
 const MA = MutableArithmetics
 
 const __PROJECT__ = abspath(dirname(pathof(PBO)), "..")
+include_dependency(joinpath(__PROJECT__, "Project.toml"))
 const __VERSION__ = pkgversion(PBO)
 
 # Interface Definition
