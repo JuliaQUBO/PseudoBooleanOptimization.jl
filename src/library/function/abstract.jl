@@ -107,7 +107,11 @@ function _dyadic_from_float(x::AbstractFloat, shift::Int = 0)
     iszero(x) && return nothing
     p = precision(x)
     ex = exponent(x)
-    m_raw = BigInt(ldexp(x, p - 1 - ex))
+    m_raw = if x isa BigFloat
+        setprecision(() -> BigInt(ldexp(x, p - 1 - ex)), BigFloat, p)
+    else
+        BigInt(ldexp(x, p - 1 - ex))
+    end
     return _canonical_dyadic(m_raw, ex - (p - 1) + shift)
 end
 

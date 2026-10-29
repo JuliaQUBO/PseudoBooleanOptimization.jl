@@ -263,6 +263,27 @@ function test_calculus()
                         @test PBO.coercive_fields(f_cb)[1] == BigFloat(-1.25)
                         @test !PBO.is_gauge_invariant(f_cb; atol = 1)
                         @test PBO.is_gauge_invariant(f_cb; atol = 1.25)
+
+                        # Stored 512-bit BigFloat coefficients and tolerances evaluated at 256-bit ambient precision
+                        f_512, atol_512_low, atol_512_high = setprecision(BigFloat, 512) do
+                            A_512 = BigFloat(2)^300
+                            f_hi = F_bf(
+                                1 => 2 * (A_512 + 1),
+                                2 => 2 * A_512,
+                                (1, 2) => -4 * A_512,
+                            )
+                            return (
+                                f_hi,
+                                BigFloat(1) - BigFloat(2)^(-300),
+                                BigFloat(1) + BigFloat(2)^(-300),
+                            )
+                        end
+                        @test PBO.coercive_field(f_512, 1) == BigFloat(1)
+                        @test PBO.coercive_fields(f_512) == Dict(1 => BigFloat(1), 2 => BigFloat(0))
+                        @test !PBO.is_gauge_invariant(f_512)
+                        @test !PBO.is_gauge_invariant(f_512; atol = atol_512_low)
+                        @test PBO.is_gauge_invariant(f_512; atol = BigFloat(1))
+                        @test PBO.is_gauge_invariant(f_512; atol = atol_512_high)
                     end
 
                     # Exact comparison against high-precision Rational atol without premature rounding
