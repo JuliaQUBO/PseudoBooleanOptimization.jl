@@ -17,8 +17,8 @@ abstract: >-
 repository-code: "https://github.com/JuliaQUBO/PseudoBooleanOptimization.jl"
 url: "https://juliaqubo.github.io/PseudoBooleanOptimization.jl/"
 license: MIT
-version: "0.3.0"
-date-released: 2026-06-24
+version: "0.3.1"
+date-released: 2026-10-29
 doi: "10.5281/zenodo.21650202"
 identifiers:
   - type: doi
