@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Construct missing dictionary coefficients lazily, avoiding unused exact zeros
+  on successful polynomial lookups (#51).
+
 ## v0.3.1 - 2026-10-29
 
 - Add `normalize` (`1 / √n`) and `gauge_invariant` (`h_i = 0`) options to

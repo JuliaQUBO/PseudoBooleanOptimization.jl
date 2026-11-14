@@ -105,7 +105,7 @@ end
 
 # Indexing - get
 function Base.getindex(f::F, ω) where {V,T,F<:TermDictPBF{V,T}}
-    return get(f.Φ, term_head(F, ω), zero(T))
+    return get(() -> zero(T), f.Φ, term_head(F, ω))
 end
 
 function Base.getindex(f::F, ω...) where {V,T,F<:TermDictPBF{V,T}}
