@@ -41,15 +41,17 @@ function main(output)
     miss_terms = fill(PBO.term_head(typeof(f), 1000), 10000)
     output_values = Vector{Rational{BigInt}}(undef, 10000)
     measure!(rows, "10000 existing Rational{BigInt} coefficients", () -> lookup_batch!(output_values, f, hit_terms))
-    measure!(rows, "10000 missing Rational{BigInt} coefficients", () -> lookup_batch!(output_values, f, miss_terms))
+    measure!(rows, "10000 repeated single-key missing Rational{BigInt} coefficients", () -> lookup_batch!(output_values, f, miss_terms))
     measure!(rows, "equal 5050-term rational polynomials", () -> f == g)
     measure!(rows, "unequal 5050-term rational polynomials", () -> f == unequal)
     open(output, "w") do io
         TOML.print(io, Dict("julia" => string(VERSION), "source" => pathof(PBO),
             "threads" => Threads.nthreads(), "blas_threads" => BLAS.get_num_threads(),
             "warmups_per_operation" => 2, "repetitions" => 5,
-            "terms" => length(f), "fixture_construction_seconds" => construction.time,
-            "fixture_construction_bytes" => construction.bytes, "samples" => rows))
+            "terms" => length(f), "cold_fixture_and_compile_seconds" => construction.time,
+            "cold_fixture_and_compile_bytes" => construction.bytes,
+            "cold_fixture_and_compile_allocations" => Base.gc_alloc_count(construction.gcstats),
+            "cold_fixture_and_compile_gc_seconds" => construction.gctime, "samples" => rows))
     end
 end
 

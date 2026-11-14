@@ -6,6 +6,7 @@ end
 
 const lookup_zero_calls = Ref(0)
 Base.zero(::Type{LookupZeroProbe}) = (lookup_zero_calls[] += 1; LookupZeroProbe(0))
+Base.:(==)(a::LookupZeroProbe, b::LookupZeroProbe) = a.value == b.value
 
 function test_dict_lookup()
     @testset "Dictionary coefficient lookup" begin
@@ -20,6 +21,26 @@ function test_dict_lookup()
         @test length(probe) == 1
         @test !haskey(probe, :missing)
 
+        lookup_zero_calls[] = 0
+        @test probe[:x, :x] === stored
+        @test lookup_zero_calls[] == 0
+        @test probe[:x, :missing].value == 0
+        @test lookup_zero_calls[] == 1
+        @test !haskey(probe, (:x, :missing))
+
+        Fprobe = typeof(probe)
+        same = Fprobe(Dict(key => LookupZeroProbe(7)))
+        different = Fprobe(Dict(key => LookupZeroProbe(8)))
+        other_key = PBO.term_head(Fprobe, :y)
+        other_support = Fprobe(Dict(other_key => LookupZeroProbe(7)))
+        lookup_zero_calls[] = 0
+        @test probe == same
+        @test lookup_zero_calls[] == 0
+        @test probe != different
+        @test lookup_zero_calls[] == 0
+        @test probe != other_support
+        @test lookup_zero_calls[] == 1
+
         for T in (BigInt, Rational{BigInt})
             F = PBO.TermDictPBF{Symbol,T}
             f = F(:x => T(3), (:x, :y) => T(-2), T(5))
@@ -28,6 +49,12 @@ function test_dict_lookup()
                 @test f[input] === PBO.data(f)[term]
                 @test f[input] isa T
             end
+            @test f[:y, :x] === f[(:x, :y)]
+            @test f[:x, :x] === f[:x]
+            @test f[[:y, :x]] === f[(:x, :y)]
+            @test f[Set([:y, :x])] === f[(:x, :y)]
+            @test f[:x, :absent] == zero(T)
+            @test !haskey(f, (:x, :absent))
             before = copy(PBO.data(f))
             a, b = f[:absent], f[:absent]
             @test a == b == zero(T)
