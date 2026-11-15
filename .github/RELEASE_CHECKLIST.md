@@ -6,8 +6,12 @@ another concept record for a new version.
 
 ## Before tagging
 
-- [ ] Confirm at least two active maintainers have **Can manage** access to the
-      Zenodo record and all future versions.
+- [ ] Confirm the designated Zenodo owner, David Bernal (`@bernalde`), retains
+      **Can manage** access to the record and all future versions. The
+      [ecosystem stewardship decision](https://github.com/JuliaQUBO/QUBO.jl/issues/66#issuecomment-5153544965)
+      accepts one owner for now; a second manager is not a release gate.
+      Revisit backup stewardship annually or when maintainership changes, and
+      never share account passwords or API tokens.
 - [ ] Update the version in `Project.toml`, the release date and version in
       `CITATION.cff`, and the release notes in `CHANGELOG.md`.
 - [ ] Keep the concept DOI in `CITATION.cff` and the README badge unchanged.

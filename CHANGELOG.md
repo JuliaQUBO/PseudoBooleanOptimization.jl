@@ -1,7 +1,8 @@
 # Changelog
 
-## Unreleased
+## v0.3.2 - 2026-11-15
 
+- No breaking changes. Public interfaces and dependency compatibility are unchanged.
 - Construct missing dictionary coefficients lazily, avoiding unused exact zeros
   on successful polynomial lookups (#51).
 
